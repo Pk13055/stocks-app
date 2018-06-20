@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Quantdost - {{ title | title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'css/main.css' %}" />
+    {% include 'styles.html.j2' %}
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block head %}{% endblock head %}
+</head>
+<body>
+    {% include 'header.html.j2' %}
+    <main>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    {% include 'footer.html.j2' %}
+    {% block scripts %}{% endblock scripts %}
+</body>
+</html>

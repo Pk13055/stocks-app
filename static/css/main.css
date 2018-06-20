@@ -1,0 +1,16 @@
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-color: rgba(219, 219, 219, 0.952);
+}
+
+footer.page-footer, nav.navbar-fixed {
+  background-color: #820000 !important;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/*# sourceMappingURL=main.css.map */

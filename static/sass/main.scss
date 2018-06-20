@@ -1,0 +1,18 @@
+$primary-background: rgba(219, 219, 219, 0.952);
+$primary-color: rgb(0, 0, 0);
+$secondary-color: #820000;
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    background-color: $primary-background;
+}
+
+footer.page-footer, nav.navbar-fixed {
+    background-color: $secondary-color !important;
+}
+
+main {
+    flex: 1 0 auto;
+}
