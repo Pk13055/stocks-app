@@ -1,22 +1,48 @@
 <nav class="navbar-fixed">
     <div class="nav-wrapper">
         <a href="{% url 'homepage' %}" class="brand-logo center">
+            <i class="material-icons">trending_up</i>
             <strong>Quant</strong>Dost</a>
-        <ul id="nav-mobile" class="left hide-on-med-and-down">
+        <a href="#" data-target="mobile-nav" class="sidenav-trigger">
+            <i class="material-icons">menu</i>
+        </a>
+        <ul id="nav-left" class="left hide-on-med-and-down">
             <li>
-                <a href="{% url 'homepage' %}">Home</a>
+                <a href="{% url 'homepage' %}">
+                    <i class="material-icons left">timeline</i> Home</a>
             </li>
             <li>
-                <a href="{% url 'methodology' %}">Methodology</a>
+                <a href="{% url 'methodology' %}">
+                    <i class="material-icons left">info</i> Methodology</a>
             </li>
         </ul>
-        <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <ul id="nav-right" class="right hide-on-med-and-down">
             <li>
-                <a href="{% url 'about' %}">About Us</a>
+                <a href="{% url 'about' %}">
+                    <i class="material-icons left">people</i> About Us</a>
             </li>
             <li>
-                <a href="{% url 'contact' %}">Contact</a>
+                <a href="{% url 'contact' %}">
+                    <i class="material-icons left">chat</i> Contact</a>
             </li>
         </ul>
     </div>
 </nav>
+<ul class="sidenav" id="mobile-nav">
+    <li>
+        <a href="{% url 'homepage' %}">
+            <i class="material-icons left">timeline</i> Home</a>
+    </li>
+    <li>
+        <a href="{% url 'methodology' %}">
+            <i class="material-icons left">info</i> Methodology</a>
+    </li>
+    <li>
+        <a href="{% url 'about' %}">
+            <i class="material-icons left">people</i> About Us</a>
+    </li>
+    <li>
+        <a href="{% url 'contact' %}">
+            <i class="material-icons left">chat</i> Contact</a>
+    </li>
+</ul>

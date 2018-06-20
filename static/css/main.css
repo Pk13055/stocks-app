@@ -3,6 +3,7 @@ body {
   min-height: 100vh;
   flex-direction: column;
   background-color: rgba(219, 219, 219, 0.952);
+  font-family: "Roboto", sans-serif;
 }
 
 footer.page-footer, nav.navbar-fixed {
@@ -11,6 +12,9 @@ footer.page-footer, nav.navbar-fixed {
 
 main {
   flex: 1 0 auto;
+}
+main h2 {
+  font-family: "Oswald", sans-serif;
 }
 
 /*# sourceMappingURL=main.css.map */

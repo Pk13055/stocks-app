@@ -19,7 +19,7 @@ def about_route(request):
 
     '''
     return render(request, 'about.html.j2', context={
-        'title' : "about",
+        'title' : "about us",
     })
 
 
@@ -38,6 +38,6 @@ def method_route(request):
         @description Main page of the website
 
     '''
-    return render(request, 'screen1.html.j2', context={
-        'title' : "screen1",
+    return render(request, 'methodology.html.j2', context={
+        'title' : "methodology",
     })

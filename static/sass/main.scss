@@ -1,12 +1,18 @@
+// colors
 $primary-background: rgba(219, 219, 219, 0.952);
 $primary-color: rgb(0, 0, 0);
 $secondary-color: #820000;
+// fonts
+$oswald: 'Oswald', sans-serif;
+$roboto: 'Roboto', sans-serif;
+
 
 body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
     background-color: $primary-background;
+    font-family: $roboto;
 }
 
 footer.page-footer, nav.navbar-fixed {
@@ -15,4 +21,7 @@ footer.page-footer, nav.navbar-fixed {
 
 main {
     flex: 1 0 auto;
+    h2 {
+        font-family: $oswald;
+    }
 }
