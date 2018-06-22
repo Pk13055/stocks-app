@@ -35,9 +35,15 @@ main .btn {
 main .btn:hover {
   background-color: #1c0000;
 }
+main h3 i.material-icons {
+  font-size: 3rem !important;
+}
 main p.flow-text {
   text-align: justify;
   text-justify: inter-word;
+}
+main p#about-info {
+  font-size: 22px;
 }
 
 /*# sourceMappingURL=main.css.map */

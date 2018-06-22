@@ -41,8 +41,14 @@ main {
             background-color: darken($secondary-color, 20%);
         }
     }
+    h3 i.material-icons {
+        font-size: 3rem !important;
+    }
     p.flow-text {
         text-align: justify;
         text-justify: inter-word;
+    }
+    p#about-info {
+        font-size: 22px;
     }
 }

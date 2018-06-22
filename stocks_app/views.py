@@ -27,20 +27,24 @@ def homepage_route(request):
         {
             'id' : "valueStocks",
             'name' : "Value Stocks",
+            'icon' : 'trending_up',
             'data' : pickle.load(open('value_stocks.pkl', 'rb')),
         },
         {
             'id' : "dividendStocks",
+            'icon' : 'donut_small',
             'name' : "Dividend Stocks",
             'data' : pickle.load(open('high_div.pkl', 'rb')),
         },
         {
             'id' : "combinedStocks",
+            'icon' : 'call_merge',
             'name' : "Value and Dividend Combined",
             'data' : pickle.load(open('value_high_div.pkl', 'rb')),
         },
         {
             'id' : "cointPairs",
+            'icon' : 'compare_arrow',
             'name' : "Cointegrated Pairs",
             'data' : pickle.load(open('coint_pairs.pkl', 'rb')),
         }
