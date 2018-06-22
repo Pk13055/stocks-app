@@ -22,6 +22,7 @@ app_name = "stocks_app"
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.homepage_route, name='homepage'),
+    path('test/', views.test_route, name='test'),
 
     path('about/', views.about_route, name='about'),
     path('contact/', views.contact_route, name='contact'),

@@ -1,15 +1,58 @@
-from django.shortcuts import render
+import json
+import pickle
+
+import pandas as pd
 from django.http import JsonResponse
+from django.shortcuts import render
 
 # Create your views here.
+
+def test_route(request):
+    '''
+        @description Testing route
+    '''
+    table = pickle.load(open('value_stocks.pkl', 'rb'))
+    return render(request, 'test.html.j2', context={
+        'status' : True,
+        'table' : table.to_html()
+    })
+
 
 def homepage_route(request):
     '''
         @description Main page of the website
 
     '''
+    frames = [
+        {
+            'id' : "valueStocks",
+            'name' : "Value Stocks",
+            'data' : pickle.load(open('value_stocks.pkl', 'rb')),
+        },
+        {
+            'id' : "dividendStocks",
+            'name' : "Dividend Stocks",
+            'data' : pickle.load(open('high_div.pkl', 'rb')),
+        },
+        {
+            'id' : "combinedStocks",
+            'name' : "Value and Dividend Combined",
+            'data' : pickle.load(open('value_high_div.pkl', 'rb')),
+        },
+        {
+            'id' : "cointPairs",
+            'name' : "Cointegrated Pairs",
+            'data' : pickle.load(open('coint_pairs.pkl', 'rb')),
+        }
+    ]
+    # add the writeup and change data to HTML
+    [_.update({
+        'writeup' : writeup,
+        'data' : pd.DataFrame(_['data']).to_html()
+    }) for _, writeup in zip(frames, open('writeups.txt').readlines())]
     return render(request, 'homepage.html.j2', context={
         'title' : "homepage",
+        'records' : frames,
     })
 
 

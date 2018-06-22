@@ -1,4 +1,5 @@
-{% extends "base.html.j2" %} {% load static %} {% block head %}
+{% extends "base.html.j2" %}
+{% load static %} {% block head %}
 <link href="//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css" rel="stylesheet">
 <link href="{% static 'css/datatables.css' %}" rel="stylesheet">
 <style>
@@ -10,7 +11,7 @@
 {% endblock head %} {% block scripts %}
 <script>
     $(document).ready(function () {
-        $("table").addClass("data-table table-responsive table-striped table-hoverable");
+        $("table").addClass("data-table");
         $('table.data-table').DataTable();
         $("select").addClass("browser-default");
         $("a.paginate_button").addClass("btn waves-effect waves-dark").removeClass("paginate_button");
@@ -19,24 +20,13 @@
         });
     });
 </script>
-{% endblock scripts %} {% block content %}
+{% endblock scripts %}{% block content %}
 <div class="row">
-    <blockquote class="center-align">
-        <h1>Democratizing Quantitative Investing</h1>
-    </blockquote>
+    <div class="col s12">
+        <h2>Test Page</h2>
+    </div>
 </div>
-{% for record in records %}
-<section class="row" id="{{ record.id }}">
-    <div class="col s6 offset-s3 center-align">
-        <h3>{{ record.name }}</h3>
-    </div>
-    <div class="col s12">
-        {{ record.data | safe }}
-    </div>
-    <div class="col s12">
-        <p class="flow-text">{{ record.writeup }}</p>
-    </div>
-</section>
-<hr>
-{% endfor %}
+<div class="row">
+    {{ table | safe }}
+</div>
 {% endblock content %}
