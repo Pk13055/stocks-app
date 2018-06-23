@@ -1,6 +1,54 @@
-{% extends "base.html.j2" %}
-{% block content %}
+{% extends "base.html.j2" %} {% load static %} {% block head %}
+<link href="//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="{% static 'css/datatables.css' %}" rel="stylesheet">
+<style>
+    div.dataTables_wrapper {
+        margin-bottom: 3em;
+    }
+</style>
+<script src="//cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
+{% endblock head %} {% block scripts %}
+<script>
+    $(document).ready(function () {
+        $("table").addClass("data-table table-responsive table-striped table-hoverable");
+        $('table.data-table').DataTable();
+        $("select").addClass("browser-default");
+        $("a.paginate_button").addClass("btn waves-effect waves-dark").removeClass("paginate_button");
+        $("body").bind("DOMNodeInserted", function () {
+            $(this).find('a.paginate_button').addClass('btn waves-effect waves-dark').removeClass(
+                "paginate_button");
+        });
+        $('.collapsible').collapsible({
+            accordion: false
+        });
+    });
+</script>
+{% endblock scripts %} {% block content %}
 <div class="row">
-    <div class="col s12"><h2>Main Page</h2></div>
+    <blockquote class="center-align">
+        <h1>Democratizing Quantitative Investing</h1>
+    </blockquote>
+</div>
+<div class="row">
+    <p class="grey-text text-darken-4 justify" id="about-info">
+            We perform quantitative analysis on stocks and publish our results on this website. Our algorithms crunch data at regular
+            intervals and the results of the analysis are updated instantaneously. Anyone interested is free to use our results
+            for their personal trading. Please share your invaluable suggestions and feedback.
+    </p>
+</div>
+<div class="row">
+    <ul class="collapsible popout">
+        {% for record in records %}
+        <li id="{{ record.id }}">
+            <div class="collapsible-header">
+                <h3><i class="material-icons large show-on-med-and-up">{{ record.icon }}</i> {{ record.name }}</h3>
+            </div>
+            <div class="collapsible-body">
+                {{ record.data | safe }}
+                <p class="flow-text">{{ record.writeup }}</p>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock content %}

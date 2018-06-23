@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 """
-Picking value stocks by web scraping company fundamental data based on 
+Picking value stocks by web scraping company fundamental data based on
 Greenblatt's Magic Formula
 
 Author   - Mayank Rasu
@@ -46,8 +47,9 @@ tickers = ["ZEEL.NS","WOCKPHARMA.NS","WIPRO.NS","VOLTAS.NS","VEDL.NS","VAKRANGEE
 
 
 ##########Web scraping to extract relevant fundamental data for companies######
-for ticker in tickers:
+for i, ticker in enumerate(tickers):
     try:
+        print("Processing %s (%d/%d)" % (ticker, i, len(tickers)), end="\r", flush=True)
         url = 'https://in.finance.yahoo.com/quote/'+ticker+'/balance-sheet?p='+ticker
         page = requests.get(url)
         contents = page.content
@@ -100,9 +102,9 @@ for ticker in tickers:
                     doc = csv.writer(File)
                     doc.writerow(prnt.split('|'))
                 File.close()
-    except:
-        print("unable to extract data for ",ticker)
-        continue
+    except Exception as e:
+        print("unable to extract data for %s | %s" % (ticker, e))
+
 ###############################################################################
 ###############################################################################
 
@@ -138,7 +140,7 @@ for ticker in tickers:
         all_stats['{}'.format(ticker)] = ticker_stats
     except:
         print("can't read data for ",ticker)
-    
+
 all_stats_df = pd.DataFrame(all_stats,index=indx)
 
 # cleansing of fundamental data imported in dataframe
@@ -148,30 +150,30 @@ all_stats_df.iloc[1,:] = [x.replace("T","E+09") for x in all_stats_df.iloc[1,:].
 all_stats_df.iloc[-1,:] = [str(x).replace("%","E-02") for x in all_stats_df.iloc[-1,:].values]
 for ticker in all_stats_df.columns:
     all_stats_df[ticker] = pd.to_numeric(all_stats_df[ticker].values,errors='coerce')
-    
-# calculating relevant financial metrics for each stock    
+
+# calculating relevant financial metrics for each stock
 transpose_df = all_stats_df.transpose()
 final_stats_df = pd.DataFrame()
 final_stats_df["EBIT"] = transpose_df["EBIT"]
 final_stats_df["TEV"] =  transpose_df["MarketCap"].fillna(0) \
                          +transpose_df["TotDebt"].fillna(0) \
                          +transpose_df["PrefStock"].fillna(0) \
-                         -(transpose_df["CurrAsset"].fillna(0)-transpose_df["CurrLiab"].fillna(0))    
-final_stats_df["EarningYield"] =  final_stats_df["EBIT"]/final_stats_df["TEV"]   
-final_stats_df["FCFYield"] = (transpose_df["CashFlowOps"]-transpose_df["Capex"])/transpose_df["MarketCap"]   
-final_stats_df["ROC"]  = transpose_df["EBIT"]/(transpose_df["PPE"]+transpose_df["CurrAsset"]-transpose_df["CurrLiab"])  
+                         -(transpose_df["CurrAsset"].fillna(0)-transpose_df["CurrLiab"].fillna(0))
+final_stats_df["EarningYield"] =  final_stats_df["EBIT"]/final_stats_df["TEV"]
+final_stats_df["FCFYield"] = (transpose_df["CashFlowOps"]-transpose_df["Capex"])/transpose_df["MarketCap"]
+final_stats_df["ROC"]  = transpose_df["EBIT"]/(transpose_df["PPE"]+transpose_df["CurrAsset"]-transpose_df["CurrLiab"])
 final_stats_df["BookToMkt"] = transpose_df["BookValue"]/transpose_df["MarketCap"]
 final_stats_df["DivYield"] = transpose_df["DivYield"]
 
 
 ################################Output Dataframes##############################
 
-# finding value stocks based on Magic Formula  
-final_stats_df["CombRank"] = final_stats_df["EarningYield"].rank(ascending=False)+final_stats_df["ROC"].rank(ascending=False)   
+# finding value stocks based on Magic Formula
+final_stats_df["CombRank"] = final_stats_df["EarningYield"].rank(ascending=False)+final_stats_df["ROC"].rank(ascending=False)
 value_stocks = final_stats_df.sort_values("CombRank").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,5]]
 print("------------------------------------------------")
 print("Value stocks based on Greenblatt's Magic Formula")
-print(value_stocks)    
+print(value_stocks)
 
 
 # finding highest dividend yield stocks
@@ -184,11 +186,11 @@ print(high_dividend_stocks)
 # # Magic Formula & Dividend yield combined
 final_stats_df["CombRank2"] = final_stats_df["EarningYield"].rank(ascending=False) \
                               +final_stats_df["ROC"].rank(ascending=False)  \
-                              +final_stats_df["DivYield"].rank(ascending=False) 
+                              +final_stats_df["DivYield"].rank(ascending=False)
 value_high_div_stocks = final_stats_df.sort_values("CombRank2").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,6,5]]
 print("------------------------------------------------")
 print("Magic Formula and Dividend Yield combined")
-print(value_high_div_stocks)    
+print(value_high_div_stocks)
 
 
 # pickle files

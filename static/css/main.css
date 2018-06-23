@@ -6,15 +6,44 @@ body {
   font-family: "Roboto", sans-serif;
 }
 
-footer.page-footer, nav.navbar-fixed {
+footer.page-footer,
+nav.navbar-fixed {
   background-color: #820000 !important;
+}
+
+input {
+  border-bottom: 1px solid #820000 !important;
+  box-shadow: 0 1px 0 0 #820000 !important;
 }
 
 main {
   flex: 1 0 auto;
 }
-main h2 {
+main h3,
+main h2,
+main h1 {
   font-family: "Oswald", sans-serif;
+}
+main blockquote {
+  margin: 20px 0;
+  padding-left: 1.5rem;
+  border-left: 5px solid #820000;
+}
+main .btn {
+  background-color: #820000;
+}
+main .btn:hover {
+  background-color: #1c0000;
+}
+main h3 i.material-icons {
+  font-size: 3rem !important;
+}
+main p.flow-text {
+  text-align: justify;
+  text-justify: inter-word;
+}
+main p#about-info {
+  font-size: 22px;
 }
 
 /*# sourceMappingURL=main.css.map */
