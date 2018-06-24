@@ -74,8 +74,8 @@ def trigger(stock1,stock2,stock1_stndz,stock2_stndz):
     return [trigger,lower_signal,upper_signal,actual,half_life,present_ratio,target_ratio,message]
 
 # Printing out all relevant information for pairs of stock which show cointegration
-title = ["Stock", "Close Price 1", "Cointegrated Stock", "Close Price 2",
-    "Action", "Half Life", "Current Ratio", "Expected Ratio"]
+title = ["Stock", "Close_Price_1", "Cointegrated_Stock", "Close_Price_2",
+    "Action", "Half_Life", "Current_Ratio", "Expected_Ratio"]
 
 final_df = pd.DataFrame()
 for a in range(len(selected_pairs.columns)):
