@@ -9,17 +9,24 @@ Author   - Mayank Rasu
 
 # importing libraries
 import os
+import requests
 import pandas as pd
 
-cwd = os.getcwd() # getting current working directory to save output files
+DATA_DIR = os.path.join(os.getcwd(), 'dumps')
+try:
+    os.mkdir(DATA_DIR)
+except:
+    pass
 
+# the full path for the csv dumps
+fullpath = lambda filename: os.path.join(DATA_DIR, filename)
 # Fetches the latest list of tickers from gist
 getTickers = lambda url: requests.get(url).text.splitlines()
 
 all_tickers = getTickers(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
     "f75f7896ce37963bf080d486f872afe812135284/all_tickers.txt"))
 
-tickers_nonFI = getTicker(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
+tickers_nonFI = getTickers(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
     "f75f7896ce37963bf080d486f872afe812135284/tickers_nonFI.txt"))
 
 # creating dataframe with relevant financial information for each stock using fundamental data
@@ -39,9 +46,9 @@ stats = ["Earnings before interest and taxes",
 indx = ["EBIT","MarketCap","NetIncome","CashFlowOps","Capex","CurrAsset",
         "CurrLiab","PPE","BookValue","TotDebt","PrefStock","DivYield"]
 all_stats = {}
-for ticker in tickers_all:
+for ticker in all_tickers:
     try:
-        temp = pd.read_csv(cwd+'/financials_{}.csv'.format(ticker))
+        temp = pd.read_csv(fullpath('financials_{}.csv'.format(ticker)))
         temp.set_index("Period ending",inplace=True)
         temp.drop(["Revenue","Period ending"],inplace=True)
         ticker_stats = []
@@ -108,6 +115,6 @@ print(value_high_div_stocks)
 
 
 # pickle files
-value_stocks.to_pickle(cwd+"/value_stocks.pkl")
-high_dividend_stocks.to_pickle(cwd+"/high_div.pkl")
-value_high_div_stocks.to_pickle(cwd+"/value_high_div.pkl")
+value_stocks.to_pickle('value_stocks.pkl')
+high_dividend_stocks.to_pickle('high_div.pkl')
+value_high_div_stocks.to_pickle('value_high_div.pkl')

@@ -15,8 +15,14 @@ import pandas as pd
 import pandas_datareader.data as pdr
 import datetime
 
-cwd = os.getcwd() # getting current working directory to save output files
+DATA_DIR = os.path.join(os.getcwd(), 'dumps')
+try:
+    os.mkdir(DATA_DIR)
+except:
+    pass
 
+# the full path for the csv dumps
+fullpath = lambda filename: os.path.join(DATA_DIR, filename)
 # Fetches the latest list of tickers from gist
 getTickers = lambda url: requests.get(url).text.splitlines()
 
@@ -33,7 +39,7 @@ for ticker in all_tickers:
         tabl = soup.findAll("table", {"class": "Lh(1.7) W(100%) M(0)"})
         for t in tabl:
             rows = t.findAll('tr')
-            with open(cwd+'/financials_{}.csv'.format(ticker),'w') as File:
+            with open(fullpath('financials_{}.csv'.format(ticker)),'w') as File:
                 for row in rows:
                     prnt = row.get_text(separator='|').replace(",","")
                     doc = csv.writer(File)
@@ -46,7 +52,7 @@ for ticker in all_tickers:
         tabl2 = soup2.findAll("table", {"class": "Lh(1.7) W(100%) M(0)"})
         for t2 in tabl2:
             rows2 = t2.findAll('tr')
-            with open(cwd+'/financials_{}.csv'.format(ticker),'a') as File:
+            with open(fullpath('financials_{}.csv'.format(ticker)),'a') as File:
                 for row in rows2:
                     prnt = row.get_text(separator='|').replace(",","")
                     doc = csv.writer(File)
@@ -59,7 +65,7 @@ for ticker in all_tickers:
         tabl3 = soup3.findAll("table", {"class": "Lh(1.7) W(100%) M(0)"})
         for t3 in tabl3:
             rows3 = t3.findAll('tr')
-            with open(cwd+'/financials_{}.csv'.format(ticker),'a') as File:
+            with open(fullpath('financials_{}.csv'.format(ticker)),'a') as File:
                 for row in rows3:
                     prnt = row.get_text(separator='|').replace(",","")
                     doc = csv.writer(File)
@@ -72,7 +78,7 @@ for ticker in all_tickers:
         tabl4 = soup4.findAll("table", {"class": "table-qsp-stats Mt(10px)"})
         for t4 in tabl4:
             rows4 = t4.findAll('tr')
-            with open(cwd+'/financials_{}.csv'.format(ticker),'a') as File:
+            with open(fullpath('financials_{}.csv'.format(ticker)),'a') as File:
                 for row in rows4:
                     prnt = row.get_text(separator='|').replace(",","")
                     doc = csv.writer(File)
@@ -104,4 +110,4 @@ while len(cp_tickers) != 0 and attempt <=5:
     attempt+=1
 
 # Export extracted stock data into a csv for future reproduction
-close_prices.to_csv(cwd+"/closing_prices.csv")
+close_prices.to_csv("closing_prices.csv")
