@@ -11,6 +11,9 @@ requests = "*"
 "autopep8" = "*"
 pandas = "*"
 numpy = "*"
+statsmodels = "*"
+pandas-datareader = "*"
+scipy = "*"
 
 [dev-packages]
 
