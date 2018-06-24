@@ -7,7 +7,7 @@ body {
 }
 
 footer.page-footer,
-nav.navbar-fixed {
+.navbar-fixed nav {
   background-color: #820000 !important;
 }
 
