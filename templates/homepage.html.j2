@@ -44,6 +44,7 @@
                 <h3><i class="material-icons large show-on-med-and-up">{{ record.icon }}</i> {{ record.name }}</h3>
             </div>
             <div class="collapsible-body">
+                <p class="grey-text text-darken-3">Last updated {{ record.last_modified | timesince }} ago</p>
                 {{ record.data | safe }}
                 <p class="flow-text">{{ record.writeup }}</p>
             </div>

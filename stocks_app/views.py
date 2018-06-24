@@ -1,4 +1,6 @@
+import datetime
 import json
+import os
 import pickle
 
 import pandas as pd
@@ -30,24 +32,29 @@ def homepage_route(request):
             'name' : "Value Stocks",
             'icon' : 'trending_up',
             'data' : pickle.load(open('value_stocks.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('value_stocks.pkl')),
+
         },
         {
             'id' : "dividendStocks",
             'icon' : 'donut_small',
             'name' : "Dividend Stocks",
             'data' : pickle.load(open('high_div.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('high_div.pkl')),
         },
         {
             'id' : "combinedStocks",
             'icon' : 'call_merge',
             'name' : "Value and Dividend Combined",
             'data' : pickle.load(open('value_high_div.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('value_high_div.pkl')),
         },
         {
             'id' : "cointPairs",
             'icon' : 'compare_arrow',
             'name' : "Cointegrated Pairs",
             'data' : pickle.load(open('coint_pairs.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('coint_pairs.pkl')),
         }
     ]
 
