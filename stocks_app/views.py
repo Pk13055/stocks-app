@@ -2,6 +2,7 @@ import json
 import pickle
 
 import pandas as pd
+import requests
 from django.http import JsonResponse
 from django.shortcuts import render
 
@@ -49,11 +50,16 @@ def homepage_route(request):
             'data' : pickle.load(open('coint_pairs.pkl', 'rb')),
         }
     ]
+
+    # Fetches the latest list of tickers from gist
+    getGist = lambda url: requests.get(url).text.splitlines()
+
     # add the writeup and change data to HTML
     [_.update({
         'writeup' : writeup,
         'data' : pd.DataFrame(_['data']).to_html()
-    }) for _, writeup in zip(frames, open('writeups.txt').readlines())]
+    }) for _, writeup in zip(frames, getGist(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
+        "f75f7896ce37963bf080d486f872afe812135284/writeup.txt")))]
     return render(request, 'homepage.html.j2', context={
         'title' : "homepage",
         'records' : frames,
