@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Extracting relavent stock and fundamental data for relevant stocks
 to be run everyday as 6PM IST
@@ -112,7 +113,7 @@ for ticker in all_tickers:
     except:
         print("unable to extract data for ",ticker)
         continue
-    
+
 # extracting stock data (historical close price) for the stocks identified
 close_prices = pd.DataFrame()
 cp_tickers = all_tickers
@@ -128,11 +129,11 @@ while len(cp_tickers) != 0 and attempt <=5:
             temp = pdr.get_data_yahoo(cp_tickers[i],datetime.date.today()-datetime.timedelta(1825),datetime.date.today())
             temp.dropna(inplace = True)
             close_prices[cp_tickers[i]] = temp["Adj Close"]
-            drop.append(cp_tickers[i])       
+            drop.append(cp_tickers[i])
         except:
             print(cp_tickers[i]," :failed to fetch data...retrying")
             continue
     attempt+=1
 
 # Export extracted stock data into a csv for future reproduction
-close_prices.to_csv(cwd+"/closing_prices.csv") 
+close_prices.to_csv(cwd+"/closing_prices.csv")

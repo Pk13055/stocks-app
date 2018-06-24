@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Extracting relavent stock and fundamental data for relevant stocks
 to be run every weekday at 8:30PM IST
@@ -13,8 +14,8 @@ import os
 
 cwd = os.getcwd() # getting current working directory to save output files
 
-stocks = pd.read_csv(cwd+"/closing_prices.csv",index_col = "Date")  
-    
+stocks = pd.read_csv(cwd+"/closing_prices.csv",index_col = "Date")
+
 # Function to standardize each column of a dataframe
 def standardize_df(df):
     std_df = (df - df.mean(axis=0))/df.std(axis=0)
@@ -42,14 +43,14 @@ name_map = {}
 for i in range(len(standardized_stocks.columns)):
     for j in range(i+1,len(standardized_stocks.columns)):
         i_j = '{}_{}'.format(i,j)
-        name_map[i_j] = standardized_stocks.columns[i]+"_"+standardized_stocks.columns[j]     
+        name_map[i_j] = standardized_stocks.columns[i]+"_"+standardized_stocks.columns[j]
 
 # Dataframe with pairs having p-value above threshold
 selected_pairs = pd.DataFrame()
 for p in coint_dict:
     if coint_dict[p] <= 0.01: #99% CI; change this value as per the required significance level
         selected_pairs[name_map[p]] = [coint_dict[p]]
-           
+
 # Function to calculate signals and triggers based on current stock price
 def trigger(stock1,stock2,stock1_stndz,stock2_stndz):
     linear_comb = stock1_stndz - stock2_stndz
@@ -69,10 +70,13 @@ def trigger(stock1,stock2,stock1_stndz,stock2_stndz):
         message = "buy "+stock2+" sell "+stock1
     else:
         message = "buy "+stock1+" sell "+stock2
+
     return [trigger,lower_signal,upper_signal,actual,half_life,present_ratio,target_ratio,message]
 
 # Printing out all relevant information for pairs of stock which show cointegration
-title = ["Stock","Close_Price1","Cointegrated_Stock","Close_Price2","Action","Half_Life","Current_Ratio","Expexted_Ratio"]
+title = ["Stock", "Close Price 1", "Cointegrated Stock", "Close Price 2",
+    "Action", "Half Life", "Current Ratio", "Expected Ratio"]
+
 final_df = pd.DataFrame()
 for a in range(len(selected_pairs.columns)):
     stock_pair = list(selected_pairs)[a].split("_")
@@ -85,6 +89,7 @@ for a in range(len(selected_pairs.columns)):
             final_df = temp_df
 final_df = final_df.transpose()
 final_df.set_index("Stock",inplace=True)
+final_df.index.name = None
 
 # pickle files
-final_df.to_pickle(cwd+"/cointegrated_pairs.pkl")
+final_df.to_pickle(cwd+"/coint_pairs.pkl")
