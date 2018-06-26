@@ -105,3 +105,4 @@ venv.bak/
 dumps/
 *.csv
 static/
+*/*pkl

@@ -1,0 +1,38 @@
+#!/bin/bash 
+# @author Mayank Rasu
+# Script to run as a cron job
+# Just executes all the python files for data generation
+# and analysis
+
+# Add env variables
+CUR_DIR=$PWD
+VIRTUALENVWRAPPER_PYTHON=$(which python3.6)
+
+# Activate the virtualenv
+source /home/ubuntu/.virtualenvs/stocks-app/bin/activate
+echo $(which python3.6)
+
+cd /home/ubuntu/stocks-app/
+
+# Extracts the csvs
+echo "Extracting data"
+echo "Start : `date`"
+python3.6 data_extract.py
+echo "End : `date`"                    
+
+# Generate the value, high_div and combined dataframes
+echo "Building dataframes"
+echo "Start : `date`"
+python3.6 value_high_div.py
+echo "End : `date`"                    
+
+
+# Generate the cointegrated pairs (pair trading)
+echo "Cointegrated pairs"
+echo "Start : `date`"
+python3.6 cointegrated_pair.py
+echo "End : `date`"                    
+
+
+cd $CUR_DIR
+
