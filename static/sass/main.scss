@@ -23,6 +23,15 @@ input {
     box-shadow: 0 1px 0 0 $secondary-color !important;
 }
 
+.red-fg {
+    color: $secondary-color;
+}
+
+.chip,
+.red-bg {
+    background-color: $secondary-color;
+}
+
 main {
     flex: 1 0 auto;
     h3,

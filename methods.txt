@@ -1,0 +1,4 @@
+Price forecast for Indices is based on the ARIMA methodology (with some tweaks).
+Our stock analysis is presently limited to NSE 200 index constituent stocks. These 200 stocks cover both large cap and mid cap Indian companies. In future, small cap stocks may be included in our analysis depending on the performance of our algorithms in backtesting.
+Finance and utility companies have been excluded from the magic formula implementation in line with Joel Greenblatt’s recommendation.
+Cointegration has been determined by analysing the stationarity of the difference between the prices of a stock pair. Our criteria for selection is 99% confidence of mean reversion behaviour by price difference based on past five years of data.
