@@ -14,7 +14,7 @@ body {
 }
 
 footer.page-footer,
-nav {
+nav.nav-wrapper {
     background-color: $secondary-color !important;
 }
 
@@ -24,12 +24,12 @@ input {
 }
 
 .red-fg {
-    color: $secondary-color;
+    color: $secondary-color !important;
 }
 
 .chip,
 .red-bg {
-    background-color: $secondary-color;
+    background-color: $secondary-color !important;
 }
 
 main {
