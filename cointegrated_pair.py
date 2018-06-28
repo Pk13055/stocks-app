@@ -14,7 +14,7 @@ import os
 
 cwd = os.getcwd() # getting current working directory to save output files
 
-stocks = pd.read_csv(cwd+"/closing_prices.csv",index_col = "Date")
+stocks = pd.read_csv(cwd+"/closing_prices.csv",index_col = "formatted_date")
 
 # Function to standardize each column of a dataframe
 def standardize_df(df):

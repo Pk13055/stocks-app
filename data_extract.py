@@ -109,7 +109,7 @@ while len(cp_tickers) != 0 and attempt <=5:
             temp.set_index("formatted_date",inplace=True)
             temp2 = temp[~temp.index.duplicated(keep='first')]
             close_prices[cp_tickers[i]] = temp2["adjclose"]
-            drop.append(cp_tickers[i])       
+            drop.append(cp_tickers[i])
         except:
             print(cp_tickers[i]," :failed to fetch data...retrying")
             continue

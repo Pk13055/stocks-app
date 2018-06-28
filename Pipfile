@@ -15,6 +15,7 @@ statsmodels = "*"
 pandas-datareader = "*"
 scipy = "*"
 ipython = "*"
+yahoofinancials = "*"
 
 [dev-packages]
 
