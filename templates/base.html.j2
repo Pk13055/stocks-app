@@ -1,3 +1,4 @@
+{% load analytics %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -22,6 +23,7 @@
     {% include 'footer.html.j2' %}
     <script src="{% static 'js/main.js' %}"></script>
     {% block scripts %}{% endblock scripts %}
+    {% analytics "UA-121560708-1" %}
 </body>
 
 </html>
