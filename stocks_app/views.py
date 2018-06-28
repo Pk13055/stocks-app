@@ -73,16 +73,6 @@ def homepage_route(request):
     })
 
 
-def about_route(request):
-    '''
-        @description about page of the website
-
-    '''
-    return render(request, 'about.html.j2', context={
-        'title' : "about us",
-    })
-
-
 def contact_route(request):
     '''
         @description contact page of the website
@@ -95,9 +85,11 @@ def contact_route(request):
 
 def method_route(request):
     '''
-        @description Main page of the website
-
+        @description The methodology page of the website
     '''
+
+    methods = open('methods.txt').readlines()
     return render(request, 'methodology.html.j2', context={
         'title' : "methodology",
+        'points' : methods,
     })
