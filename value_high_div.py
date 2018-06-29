@@ -23,11 +23,9 @@ fullpath = lambda filename: os.path.join(DATA_DIR, filename)
 # Fetches the latest list of tickers from gist
 getTickers = lambda url: requests.get(url).text.splitlines()
 
-all_tickers = getTickers(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
-    "f75f7896ce37963bf080d486f872afe812135284/all_tickers.txt"))
+all_tickers = getTickers(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/all_tickers.txt"))
 
-tickers_nonFI = getTickers(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
-    "f75f7896ce37963bf080d486f872afe812135284/tickers_nonFI.txt"))
+tickers_nonFI = getTickers(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/tickers_nonFI.txt"))
 
 # creating dataframe with relevant financial information for each stock using fundamental data
 stats = ["Earnings before interest and taxes",

@@ -26,8 +26,7 @@ fullpath = lambda filename: os.path.join(DATA_DIR, filename)
 # Fetches the latest list of tickers from gist
 getTickers = lambda url: requests.get(url).text.splitlines()
 
-all_tickers = getTickers(("https://gist.github.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/"
-    "f75f7896ce37963bf080d486f872afe812135284/all_tickers.txt"))
+all_tickers = getTickers(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/all_tickers.txt"))
 
 ##########Web scraping to extract relevant fundamental data for companies######
 for ticker in all_tickers:
@@ -108,6 +107,7 @@ while len(cp_tickers) != 0 and attempt <=5:
             temp = pd.DataFrame(ohlv)[["formatted_date","adjclose"]]
             temp.set_index("formatted_date",inplace=True)
             temp2 = temp[~temp.index.duplicated(keep='first')]
+            temp2.sort_index(axis=0,inplace=True)
             close_prices[cp_tickers[i]] = temp2["adjclose"]
             drop.append(cp_tickers[i])
         except:
