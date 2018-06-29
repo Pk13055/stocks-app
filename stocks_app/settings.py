@@ -23,11 +23,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'd7#$+%477&c$+%%7hdk_7k8=qdd1+g1v51*gazsmtu88oxb3zn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
 	"localhost",
 	"127.0.0.1",
+    ".quantdost.com",
+    "www.quantdost.com",
+    "52.66.82.41",
+    "172.31.20.173",
 	"ec2-52-66-82-41.ap-south-1.compute.amazonaws.com",
 ]
 
