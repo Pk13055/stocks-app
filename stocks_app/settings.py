@@ -28,6 +28,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
 	"localhost",
 	"127.0.0.1",
+    "quantdost.com",
+    "www.quantdost.com",
 	"ec2-52-66-82-41.ap-south-1.compute.amazonaws.com",
 ]
 
