@@ -65,7 +65,7 @@ def homepage_route(request):
     [_.update({
         'writeup' : writeup,
         'data' : pd.DataFrame(_['data']).to_html()
-    }) for _, writeup in zip(frames, getGist(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/writeup.txt")))]
+    }) for _, writeup in zip(frames, getGist(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/d13ef1f98f2d39f44e3f8397f00429ecab50d2d1/writeup.txt")))]
     return render(request, 'homepage.html.j2', context={
         'title' : "homepage",
         'records' : frames,
