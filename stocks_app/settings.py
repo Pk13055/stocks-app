@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     ".quantdost.com",
     "www.quantdost.com",
     "52.66.82.41",
+    "172.31.20.173",
 	"ec2-52-66-82-41.ap-south-1.compute.amazonaws.com",
 ]
 
