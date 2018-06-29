@@ -30,7 +30,7 @@ ALLOWED_HOSTS = [
 	"127.0.0.1",
     ".quantdost.com",
     "www.quantdost.com",
-    "52.66.82.41"
+    "52.66.82.41",
 	"ec2-52-66-82-41.ap-south-1.compute.amazonaws.com",
 ]
 
