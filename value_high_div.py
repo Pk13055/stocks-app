@@ -90,8 +90,9 @@ final_stats_df["DivYield"] = transpose_df["DivYield"]
 
 # finding value stocks based on Magic Formula
 final_stats_val_df = final_stats_df.loc[tickers_nonFI,:]
-final_stats_val_df["CombRank"] = final_stats_val_df["EarningYield"].rank(ascending=False)+final_stats_val_df["ROC"].rank(ascending=False)
-value_stocks = final_stats_val_df.sort_values("CombRank").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,5]]
+final_stats_val_df["CombRank"] = final_stats_val_df["EarningYield"].rank(ascending=False,na_option='bottom')+final_stats_val_df["ROC"].rank(ascending=False,na_option='bottom')
+final_stats_val_df["MagicFormulaRank"] = final_stats_val_df["CombRank"].rank(method='first')
+value_stocks = final_stats_val_df.sort_values("MagicFormulaRank").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,5,8]]
 print("------------------------------------------------")
 print("Value stocks based on Greenblatt's Magic Formula")
 print(value_stocks)
@@ -105,13 +106,14 @@ print(high_dividend_stocks)
 
 
 # # Magic Formula & Dividend yield combined
-final_stats_df["CombRank2"] = final_stats_df["EarningYield"].rank(ascending=False) \
-                              +final_stats_df["ROC"].rank(ascending=False)  \
-                              +final_stats_df["DivYield"].rank(ascending=False)
-value_high_div_stocks = final_stats_df.sort_values("CombRank2").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,6,5]]
+final_stats_df["CombRank"] = final_stats_df["EarningYield"].rank(ascending=False,method='first') \
+                              +final_stats_df["ROC"].rank(ascending=False,method='first')  \
+                              +final_stats_df["DivYield"].rank(ascending=False,method='first')
+final_stats_df["CombinedRank"] = final_stats_df["CombRank"].rank(method='first')
+value_high_div_stocks = final_stats_df.sort_values("CombinedRank").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,6,5,8]]
 print("------------------------------------------------")
 print("Magic Formula and Dividend Yield combined")
-print(value_high_div_stocks)
+print(value_high_div_stocks)    
 
 
 # pickle files
