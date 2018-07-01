@@ -45,10 +45,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
+    'google_analytics',
+
     'stocks_app',
 
 ]
+
+GOOGLE_ANALYTICS = {
+    'google_analytics_id' : 'UA-121560708-1',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

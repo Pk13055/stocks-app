@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from . import settings, views
 
@@ -22,6 +22,7 @@ app_name = "stocks_app"
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('analytics/', include('google_analytics.urls')),
     path('', views.homepage_route, name='homepage'),
 
     path('contact/', views.contact_route, name='contact'),
