@@ -31,8 +31,8 @@ def homepage_route(request):
             'id' : "priceForecast",
             'name' : "Next Day Forecast",
             'icon' : 'trending_up',
-            'data' : pickle.load(open('price_forecast.pkl', 'rb')),
-            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('price_forecast.pkl')),
+            'data' : pickle.load(open('forecasted_prices.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('forecasted_prices.pkl')),
 
         },
         {
