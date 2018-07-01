@@ -28,9 +28,17 @@ def homepage_route(request):
     '''
     frames = [
         {
+            'id' : "priceForecast",
+            'name' : "Next Day Forecast",
+            'icon' : 'trending_up',
+            'data' : pickle.load(open('forecasted_prices.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('forecasted_prices.pkl')),
+
+        },
+        {
             'id' : "valueStocks",
             'name' : "Value Stocks",
-            'icon' : 'trending_up',
+            'icon' : 'attach_money',
             'data' : pickle.load(open('value_stocks.pkl', 'rb')),
             'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('value_stocks.pkl')),
 
