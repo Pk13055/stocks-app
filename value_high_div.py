@@ -23,9 +23,11 @@ fullpath = lambda filename: os.path.join(DATA_DIR, filename)
 # Fetches the latest list of tickers from gist
 getTickers = lambda url: requests.get(url).text.splitlines()
 
-all_tickers = getTickers(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/all_tickers.txt"))
+all_tickers = getTickers(("https://gist.githubusercontent.com/mayankrasu/"
+"8fe09d3a12ee9f0530a43886e2da1615/raw/all_tickers.txt"))
 
-tickers_nonFI = getTickers(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/tickers_nonFI.txt"))
+tickers_nonFI = getTickers(("https://gist.githubusercontent.com/mayankrasu/"
+"8fe09d3a12ee9f0530a43886e2da1615/raw/tickers_nonFI.txt"))
 
 # creating dataframe with relevant financial information for each stock using fundamental data
 stats = ["Earnings before interest and taxes",
@@ -111,7 +113,7 @@ final_stats_df["CombinedRank"] = final_stats_df["CombRank"].rank(method='first')
 value_high_div_stocks = final_stats_df.sort_values("CombinedRank").iloc[:round(0.1*len(all_stats_df.columns)),[2,4,6,5,8]]
 print("------------------------------------------------")
 print("Magic Formula and Dividend Yield combined")
-print(value_high_div_stocks)    
+print(value_high_div_stocks)
 
 
 # pickle files

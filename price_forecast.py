@@ -123,4 +123,4 @@ for b in differenced_data.columns.values:
 forecast_df = pd.DataFrame({"ClosePrice":close_prices.iloc[-1,:].values,"NextForecastClose":forecast},index=["Nifty50","Sensex","NiftyBank"])
 
 # pickle files
-forecast_df.to_pickle(cwd+"/forecasted_prices.pkl")
+forecast_df.to_pickle(cwd+"/price_forecast.pkl")
