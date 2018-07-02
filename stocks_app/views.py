@@ -31,9 +31,8 @@ def homepage_route(request):
             'id' : "priceForecast",
             'name' : "Next Day Forecast",
             'icon' : 'trending_up',
-            'data' : pickle.load(open('forecasted_prices.pkl', 'rb')),
-            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('forecasted_prices.pkl')),
-
+            'data' : pickle.load(open('price_forecast.pkl', 'rb')),
+            'last_modified' : datetime.datetime.fromtimestamp(os.path.getmtime('price_forecast.pkl')),
         },
         {
             'id' : "valueStocks",
@@ -73,7 +72,8 @@ def homepage_route(request):
     [_.update({
         'writeup' : writeup,
         'data' : pd.DataFrame(_['data']).to_html()
-    }) for _, writeup in zip(frames, getGist(("https://gist.githubusercontent.com/mayankrasu/8fe09d3a12ee9f0530a43886e2da1615/raw/writeup.txt")))]
+    }) for _, writeup in zip(frames, getGist(("https://gist.githubusercontent.com/mayankrasu/"
+    "8fe09d3a12ee9f0530a43886e2da1615/raw/writeup.txt")))]
     return render(request, 'homepage.html.j2', context={
         'title' : "homepage",
         'records' : frames,
