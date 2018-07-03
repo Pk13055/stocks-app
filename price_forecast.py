@@ -19,7 +19,7 @@ all_tickers = ["^NSEI","^BSESN","^NSEBANK"]
 
 # extracting historical close price for major stock indices
 close_prices = pd.DataFrame()
-end_date = (datetime.date.today()).strftime('%Y-%m-%d')
+end_date = (datetime.date.today()+datetime.timedelta(1)).strftime('%Y-%m-%d')
 beg_date = (datetime.date.today()-datetime.timedelta(365)).strftime('%Y-%m-%d')
 cp_tickers = all_tickers
 attempt = 0

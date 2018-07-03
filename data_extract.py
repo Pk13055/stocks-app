@@ -89,7 +89,7 @@ for ticker in all_tickers:
 
 # extracting stock data (historical close price) for the stocks identified
 close_prices = pd.DataFrame()
-end_date = (datetime.date.today()).strftime('%Y-%m-%d')
+end_date = (datetime.date.today()+datetime.timedelta(1)).strftime('%Y-%m-%d')
 beg_date = (datetime.date.today()-datetime.timedelta(1825)).strftime('%Y-%m-%d')
 cp_tickers = all_tickers
 attempt = 0
