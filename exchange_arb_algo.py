@@ -34,6 +34,7 @@ scrips = (
         "TATASTEEL", "TECHM", "ULTRACEMCO", "VEDL",
         "WIPRO", "YESBANK", "ZEEL"
 )
+
 ask_price_nse = 0
 bid_price_nse = 0
 ask_price_bse = 0
@@ -44,7 +45,7 @@ ask_supply_bse = 0
 bid_supply_bse = 0
 symbol_nse = ''
 symbol_bse = ''
-capital = 30000
+capital = 30000 # this should be half of total true intraday capital
 pflio = {}
 
 def placeOrder(symbol, exchange, side, quantity):
@@ -95,7 +96,7 @@ def current_quote(message):
             placeOrder(message['symbol'],'NSE_EQ',TransactionType.Sell,quantity)
             placeOrder(message['symbol'],'BSE_EQ',TransactionType.Buy,quantity)
             pflio[message['symbol']] = ['NSE_EQ','BSE_EQ',quantity]
-            capital = capital - (bid_price_nse + ask_price_bse)*quantity
+            capital = (2*capital - (bid_price_nse + ask_price_bse)*quantity)/2
             print("stock %s: sold NSE at %.3f and bought BSE at %.3f : supply %d"%(message['symbol'],bid_price_nse,ask_price_bse,quantity))
             print("remaining capital :",capital*2)
             print("portfolio :",pflio)
@@ -104,7 +105,7 @@ def current_quote(message):
             placeOrder(message['symbol'],'BSE_EQ',TransactionType.Sell,quantity)
             placeOrder(message['symbol'],'NSE_EQ',TransactionType.Buy,quantity)
             pflio[message['symbol']] = ['BSE_EQ','NSE_EQ',quantity]
-            capital = capital - (bid_price_bse + ask_price_nse)*quantity
+            capital = (2*capital - (bid_price_bse + ask_price_nse)*quantity)/2
             print("stock %s: bought NSE at %.3f and sold BSE at %.3f : supply %d"%(message['symbol'],ask_price_nse,bid_price_bse,quantity))
             print("remaining capital :",capital*2)
             print("portfolio :",pflio)
