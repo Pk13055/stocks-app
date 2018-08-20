@@ -91,35 +91,38 @@ def current_quote(message):
     if ask_price_nse != 0 and bid_price_nse !=0 and ask_price_bse !=0 and bid_price_bse !=0 and symbol_nse==symbol_bse:
         diff1 = (bid_price_nse - ask_price_bse)/ask_price_bse
         diff2 = (bid_price_bse - ask_price_nse)/ask_price_nse
-        if diff1 >= 0.003 and (bid_price_nse - ask_price_bse)*min(bid_supply_nse,ask_supply_bse)>=50 and message['symbol'] not in pflio:
+        if diff1 >= 0.002 and (bid_price_nse - ask_price_bse)*min(bid_supply_nse,ask_supply_bse)>=50 and message['symbol'] not in pflio:
             quantity = min(int(capital/bid_price_nse),min(bid_supply_nse,ask_supply_bse))
-            placeOrder(message['symbol'],'NSE_EQ',TransactionType.Sell,quantity)
-            placeOrder(message['symbol'],'BSE_EQ',TransactionType.Buy,quantity)
-            pflio[message['symbol']] = ['NSE_EQ','BSE_EQ',quantity]
-            capital = (2*capital - (bid_price_nse + ask_price_bse)*quantity)/2
-            print("stock %s: sold NSE at %.3f and bought BSE at %.3f : supply %d"%(message['symbol'],bid_price_nse,ask_price_bse,quantity))
-            print("remaining capital :",capital*2)
-            print("portfolio :",pflio)
-        elif diff2 >= 0.003 and (bid_price_bse - ask_price_nse)*min(bid_supply_bse,ask_supply_nse)>=50 and message['symbol'] not in pflio:
+            if quantity >= 1:
+                placeOrder(message['symbol'],'NSE_EQ',TransactionType.Sell,quantity)
+                placeOrder(message['symbol'],'BSE_EQ',TransactionType.Buy,quantity)
+                pflio[message['symbol']] = ['NSE_EQ','BSE_EQ',quantity]
+                capital = (2*capital - (bid_price_nse + ask_price_bse)*quantity)/2
+                print("stock %s: sold NSE at %.3f and bought BSE at %.3f : supply %d"%(message['symbol'],bid_price_nse,ask_price_bse,quantity))
+                print("remaining capital :",capital*2)
+                print("portfolio :",pflio)
+        elif diff2 >= 0.002 and (bid_price_bse - ask_price_nse)*min(bid_supply_bse,ask_supply_nse)>=50 and message['symbol'] not in pflio:
             quantity = min(int(capital/bid_price_bse),min(bid_supply_bse,ask_supply_nse))
-            placeOrder(message['symbol'],'BSE_EQ',TransactionType.Sell,quantity)
-            placeOrder(message['symbol'],'NSE_EQ',TransactionType.Buy,quantity)
-            pflio[message['symbol']] = ['BSE_EQ','NSE_EQ',quantity]
-            capital = (2*capital - (bid_price_bse + ask_price_nse)*quantity)/2
-            print("stock %s: bought NSE at %.3f and sold BSE at %.3f : supply %d"%(message['symbol'],ask_price_nse,bid_price_bse,quantity))
-            print("remaining capital :",capital*2)
-            print("portfolio :",pflio)
+            if quantity >= 1:
+                placeOrder(message['symbol'],'BSE_EQ',TransactionType.Sell,quantity)
+                placeOrder(message['symbol'],'NSE_EQ',TransactionType.Buy,quantity)
+                pflio[message['symbol']] = ['BSE_EQ','NSE_EQ',quantity]
+                capital = (2*capital - (bid_price_bse + ask_price_nse)*quantity)/2
+                print("stock %s: bought NSE at %.3f and sold BSE at %.3f : supply %d"%(message['symbol'],ask_price_nse,bid_price_bse,quantity))
+                print("remaining capital :",capital*2)
+                print("portfolio :",pflio)
         elif diff1 <= 0.0005 and diff2 <= 0.0005 and message['symbol'] in pflio:
             buy_exchange = pflio[message['symbol']][0]
             sell_exchange = pflio[message['symbol']][1]
             q = pflio[message['symbol']][2]
-            placeOrder(message['symbol'],buy_exchange,TransactionType.Buy,q)
-            placeOrder(message['symbol'],sell_exchange,TransactionType.Sell,q)
-            pflio.pop(message['symbol'],None)
-            capital = capital + q*min(bid_price_bse,bid_price_nse,ask_price_bse,ask_price_nse)
-            print("profit realized for stock %s"%message['symbol'])
-            print("remaining capital :",capital*2)
-            print("portfolio :",pflio)
+            if q >= 1:
+                placeOrder(message['symbol'],buy_exchange,TransactionType.Buy,q)
+                placeOrder(message['symbol'],sell_exchange,TransactionType.Sell,q)
+                pflio.pop(message['symbol'],None)
+                capital = capital + q*min(bid_price_bse,bid_price_nse,ask_price_bse,ask_price_nse)
+                print("profit realized for stock %s"%message['symbol'])
+                print("remaining capital :",capital*2)
+                print("portfolio :",pflio)
             
             
 #upstoxAPI.get_balance()["equity"]["available_margin"]
@@ -136,7 +139,7 @@ def main():
         except:
             print("issue with get live feed call or get instrument call")
 
-timeout = time.time() + 60*60  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*120  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         main()
