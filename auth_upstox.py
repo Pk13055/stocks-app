@@ -20,7 +20,7 @@ def autologin():
     password = driver.find_element_by_xpath('//*[@id="password"]')
     dob = driver.find_element_by_xpath('//*[@id="password2fa"]')
     username.send_keys("142629")
-    password.send_keys("Shermin100!")
+    password.send_keys("Shermin200!")
     dob.send_keys("1984")
     driver.find_element_by_xpath('/html/body/form/fieldset/div[2]/div/button').click()
     driver.find_element_by_xpath('//*[@id="allow"]').click()
