@@ -149,13 +149,13 @@ def main():
                             np.where((df["ADX_14"]>25)&(df["RSI_14"]<40),-1,0))
             quantity = int(capital/df["cp"][-1])
             if df["signal"][-1] == -1 and ticker not in sell_list:
-                sell_list[message['symbol']] = [quantity]
+                sell_list[ticker] = [quantity]
             elif df["signal"][-1] == 1 and ticker not in buy_list:
-                buy_list[message['symbol']] = [quantity]
+                buy_list[ticker] = [quantity]
             elif df["signal"][-1] == 0 and ticker in sell_list:
-                sell_list.pop(message['symbol'],None)
+                sell_list.pop(ticker,None)
             elif df["signal"][-1] == 0 and ticker in buy_list:
-                buy_list.pop(message['symbol'],None)
+                buy_list.pop(ticker,None)
             print(datetime.now())
             print("Ticker = ",ticker,";timestamp = ",df.index[-1], ";Close Price = ",df["cp"][-1],";signal = ",df["signal"][-1])
             print(buy_list)
@@ -164,11 +164,13 @@ def main():
             print("issue with getting historic data or get instrument call for ",ticker)
 
 
+starttime=time.time()
 timeout = time.time() + 60*360  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
+        time.sleep(10)
         main()
-        time.sleep(60)
+        time.sleep(30 - ((time.time() - starttime) % 30.0))
     except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
