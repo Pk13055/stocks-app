@@ -21,11 +21,22 @@ upstoxAPI = Upstox(config['apiKey'], config['accessToken'])
 upstoxAPI.get_master_contract('NSE_EQ')
 
 # create an array of Nifty50 scrips
-scrips = ("AXISBANK", "RELIANCE", "YESBANK","SUNPHARMA","CIPLA","ICICIBANK","HDFCBANK","HDFC")
-
-sell_list = {}
-buy_list = {}
-capital = 30000
+scrips = (
+	"ACC",
+	"ADANIPORTS", "AMBUJACEM", "ASIANPAINT",
+	"AUROPHARMA", "AXISBANK", "BAJAJ-AUTO", "BANKBARODA",
+	"BPCL", "BHARTIARTL", "INFRATEL", "BOSCHLTD",
+	"CIPLA", "COALINDIA", "DRREDDY", "EICHERMOT",
+	"GAIL", "HCLTECH", "HDFCBANK", "HEROMOTOCO",
+	"HINDALCO", "HINDUNILVR", "HDFC", "ITC", "ICICIBANK",
+	"IBULHSGFIN", "IOC", "INDUSINDBK", "INFY", "KOTAKBANK",
+	"LT", "LUPIN", "M&M", "MARUTI", "NTPC", "ONGC",
+	"POWERGRID", "RELIANCE", "SBIN", "SUNPHARMA",
+	"TCS", "TATAMTRDVR", "TATAMOTORS", "TATAPOWER",
+	"TATASTEEL", "TECHM", "ULTRACEMCO", "VEDL",
+	"WIPRO", "YESBANK", "ZEEL"
+)
+capital = 7200
 
 def placeOrder(symbol, exchange, side, quantity):
     exchange = "NSE_EQ"
@@ -43,6 +54,34 @@ def placeOrder(symbol, exchange, side, quantity):
 		None,  # stop_loss
 		None,  # square_off
 		None  # trailing_ticks
+	)
+    
+def slmOrder(symbol, exchange, side, quantity, trigger):
+    exchange = "NSE_EQ"
+    scrip = upstoxAPI.get_instrument_by_symbol(exchange, symbol)
+    upstoxAPI.place_order(
+		side,  # transaction_type
+		scrip,  # instrument
+		quantity,  # quantity
+		OrderType.StopLossMarket,  # order_type
+		ProductType.Intraday,  # product_type
+		0.0,  # price
+		trigger,  # trigger_price
+		0,  # disclosed_quantity
+		DurationType.DAY,  # duration
+		None,  # stop_loss
+		None,  # square_off
+		None  # trailing_ticks
+	)
+    
+def modifyOrder(order_id, trigger):
+    upstoxAPI.modify_order(
+		order_id,  # order_id
+		None,  # quantity
+		OrderType.StopLossMarket,  # order_type
+		0.0,  # price
+		trigger,  # trigger_price
+		0,  # disclosed_quantity
 	)
 
 def fetchOHLC(scrip):
@@ -135,8 +174,25 @@ def RSI(DF,n):
     return df['RSI']
 
 def main():
-    global sell_list, buy_list, capital
+    global capital
+    attempt = 0
+    while attempt<10:
+        try:
+            pos_df = pd.DataFrame(upstoxAPI.get_positions())
+            break
+        except:
+            print("can't get position...attempt =",attempt)
+            attempt+=1
+    while attempt<10:
+        try:
+            order_df = pd.DataFrame(upstoxAPI.get_order_history())
+            break
+        except:
+            print("can't get order information...attempt =",attempt)
+            attempt+=1
     for ticker in scrips:
+        buy_status = False
+        sell_status = False
         try:
             scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
             message = fetchOHLC(scrip)
@@ -148,29 +204,63 @@ def main():
             df['signal'] =np.where((df["ADX_14"]>25)&(df["RSI_14"]>60),1,
                             np.where((df["ADX_14"]>25)&(df["RSI_14"]<40),-1,0))
             quantity = int(capital/df["cp"][-1])
-            if df["signal"][-1] == -1 and ticker not in sell_list:
-                sell_list[ticker] = [quantity]
-            elif df["signal"][-1] == 1 and ticker not in buy_list:
-                buy_list[ticker] = [quantity]
-            elif df["signal"][-1] == 0 and ticker in sell_list:
-                sell_list.pop(ticker,None)
-            elif df["signal"][-1] == 0 and ticker in buy_list:
-                buy_list.pop(ticker,None)
-            print(datetime.now())
-            print("Ticker = ",ticker,";timestamp = ",df.index[-1], ";Close Price = ",df["cp"][-1],";signal = ",df["signal"][-1])
-            print(buy_list)
-            print(sell_list)
+            if len(order_df)>0:
+                ticker_orders = order_df[order_df["symbol"]==ticker]
+                if len(ticker_orders)>0:
+                    pending_df = ticker_orders[ticker_orders["status"]=="trigger pending"]
+                    if len(pending_df)>0:
+                        order_id = int(pending_df["order_id"].values[0])
+            if len(pos_df)>0:
+                pos = pos_df[pos_df["symbol"]==ticker]
+                if len(pos)>0:
+                    if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
+                        buy_status = True
+                        quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                        trigger = round(float((df["cp"][-1])*0.997),1)
+                    if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
+                        sell_status = True
+                        quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+                        trigger = round(float((df["cp"][-1])*1.003),1)
+            if df["signal"][-1] == -1 and not sell_status:
+                trigger = round(float((df["close"][-1])*1.003),1)
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                slmOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity, trigger)
+            elif df["signal"][-1] == -1 and sell_status:
+                modifyOrder(order_id, trigger)
+            elif df["signal"][-1] == 1 and not buy_status:
+                trigger = round(float((df["close"][-1])*0.997),1)
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                slmOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity, trigger) 
+            elif df["signal"][-1] == 1 and buy_status:
+                modifyOrder(order_id, trigger)                
+            elif df["signal"][-1] == 0 and sell_status:
+                try:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                    try:
+                        upstoxAPI.cancel_order(order_id)
+                    except:
+                        print("can't cancel order")
+                except:
+                    print("no sell_quantity") 
+            elif df["signal"][-1] == 0 and buy_status:
+                try:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                    try:
+                        upstoxAPI.cancel_order(order_id)
+                    except:
+                        print("can't cancel order")
+                except:
+                    print("no buy_quantity") 
         except:
             print("issue with getting historic data or get instrument call for ",ticker)
 
-
 starttime=time.time()
-timeout = time.time() + 60*360  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*345  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
-        time.sleep(10)
+        time.sleep(5)
         main()
-        time.sleep(30 - ((time.time() - starttime) % 30.0))
+        time.sleep(300 - ((time.time() - starttime) % 300.0))
     except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
