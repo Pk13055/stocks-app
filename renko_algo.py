@@ -21,20 +21,37 @@ upstoxAPI = Upstox(config['apiKey'], config['accessToken'])
 # get master contract for NSE EQ
 upstoxAPI.get_master_contract('NSE_EQ')
 
-# Get the tickers from NSE pre market movers
+capital = 5000 #max capital allocated to each stock
+
+# Get the tickers from NIFTY pre market movers
 url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/nifty.json' #fo.json for non nifty stocks as well
 nse = requests.get(url).text
 nse = json.loads(nse)['data']
 df = pd.DataFrame(nse)
-pre_open = df.copy().loc[:,['mktCap','symbol','perChn','iVal']]
-pre_open.set_index('symbol', drop=True, inplace=True)
+pre_open_nfty = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
+pre_open_nfty.set_index('symbol', drop=True, inplace=True)
 toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
-pre_open = pre_open.applymap(toFloat)
-pre_open['weight'] = (0.6*10)*abs(pre_open['perChn']) + (0.3/70)*pre_open['iVal'] + (0.1/60000)*pre_open['mktCap']
-pre_open.sort_values(by=['weight'],ascending=False,inplace=True)
-scrips = pre_open.iloc[:5,:].index.values.tolist() # change the number after iloc to get required numbers of tickers
+pre_open_nfty = pre_open_nfty.applymap(toFloat)
+pre_open_nfty = pre_open_nfty[pre_open_nfty['iep']<0.95*capital]
+pre_open_nfty['weight'] = (0.6*10)*abs(pre_open_nfty['perChn']) + (0.3/70)*pre_open_nfty['iVal'] + (0.1/60000)*pre_open_nfty['mktCap']
+pre_open_nfty.sort_values(by=['weight'],ascending=False,inplace=True)
+scrips_nfty = pre_open_nfty.iloc[:5,:].index.values.tolist() # change the number after iloc to get required numbers of tickers
 
-capital = 5000 #max capital allocated to each stock
+# Get the tickers from Non NIFTY FnO pre market movers
+url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/fo.json' #fo.json for non nifty stocks as well
+nse = requests.get(url).text
+nse = json.loads(nse)['data']
+df = pd.DataFrame(nse)
+pre_open_fo = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
+pre_open_fo.set_index('symbol', drop=True, inplace=True)
+toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
+pre_open_fo = pre_open_fo.applymap(toFloat)
+pre_open_fo.drop(pre_open_nfty.index,inplace=True)
+pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
+pre_open_fo['weight'] = (0.6*10)*abs(pre_open_fo['perChn']) + (0.3/70)*pre_open_fo['iVal'] + (0.1/60000)*pre_open_fo['mktCap']
+pre_open_fo.sort_values(by=['weight'],ascending=False,inplace=True)
+scrips_fo = pre_open_fo.iloc[:5,:].index.values.tolist() # change the number after iloc to get required numbers of tickers
+
 
 def placeOrder(symbol, exchange, side, quantity):
     exchange = "NSE_EQ"
@@ -67,7 +84,7 @@ def renko_bricks(DF):
     df = renko.get_bricks()
     return df
 
-def main():
+def main_nfty():
     global db, capital
     attempt = 0
     while attempt<10:
@@ -77,7 +94,7 @@ def main():
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
-    for ticker in scrips:
+    for ticker in scrips_nfty:
         buy_status = False
         sell_status = False
         try:
@@ -114,13 +131,60 @@ def main():
         except:
             print("API Issue......")
 
+def main_fo():
+    global db, capital
+    attempt = 0
+    while attempt<10:
+        try:
+            pos_df = pd.DataFrame(upstoxAPI.get_positions())
+            break
+        except:
+            print("can't get position information...attempt =",attempt)
+            attempt+=1
+    for ticker in scrips_fo:
+        buy_status = False
+        sell_status = False
+        try:
+            scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
+            message = fetchOHLC(scrip)
+            df = pd.DataFrame(message)
+            df["timestamp"] = pd.to_datetime(df["timestamp"]/1000,unit='s')+ pd.Timedelta('05:30:00')
+            renko_df = renko_bricks(df)
+            quantity = int(capital/df["close"].values[-1])
+            if len(pos_df)>0:
+                pos = pos_df[pos_df["symbol"]==ticker]
+                if len(pos)>0: 
+                    if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
+                        buy_status = True
+                        quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                    if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
+                        sell_status = True   
+                        quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+            if not buy_status and not sell_status:
+                if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                elif not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+            if buy_status:
+                if not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, 2*quantity)
+                elif not renko_df["uptrend"].values[-1] or not renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+            if sell_status:
+                if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, 2*quantity)
+                elif renko_df["uptrend"].values[-1] or renko_df["uptrend"].values[-2]:
+                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+        except:
+            print("API Issue......")
 
 starttime=time.time()
 timeout = time.time() + 60*345  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         time.sleep(5)
-        main()
+        main_nfty()
+        main_fo()
         time.sleep(300 - ((time.time() - starttime) % 300.0))
     except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
