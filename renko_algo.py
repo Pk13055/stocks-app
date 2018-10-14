@@ -33,8 +33,8 @@ pre_open_nfty.set_index('symbol', drop=True, inplace=True)
 toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
 pre_open_nfty = pre_open_nfty.applymap(toFloat)
 pre_open_nfty = pre_open_nfty[pre_open_nfty['iep']<0.95*capital]
-pre_open_nfty['weight'] = (0.6*10)*abs(pre_open_nfty['perChn']) + (0.3/70)*pre_open_nfty['iVal'] + (0.1/60000)*pre_open_nfty['mktCap']
-pre_open_nfty.sort_values(by=['weight'],ascending=False,inplace=True)
+#pre_open_nfty['weight'] = (0.6*10)*abs(pre_open_nfty['perChn']) + (0.3/70)*pre_open_nfty['iVal'] + (0.1/60000)*pre_open_nfty['mktCap']
+pre_open_nfty.sort_values(by=['iVal'],ascending=False,inplace=True)
 scrips_nfty = pre_open_nfty.iloc[:5,:].index.values.tolist() # change the number after iloc to get required numbers of tickers
 
 # Get the tickers from Non NIFTY FnO pre market movers
@@ -42,16 +42,21 @@ url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/f
 nse = requests.get(url).text
 nse = json.loads(nse)['data']
 df = pd.DataFrame(nse)
+scrips_fo = []
 pre_open_fo = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
 pre_open_fo.set_index('symbol', drop=True, inplace=True)
 toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
 pre_open_fo = pre_open_fo.applymap(toFloat)
 pre_open_fo.drop(pre_open_nfty.index,inplace=True)
+pre_open_fo['ratio'] = pre_open_fo['iVal']/pre_open_fo['mktCap']
 pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
-pre_open_fo['weight'] = (0.6*10)*abs(pre_open_fo['perChn']) + (0.3/70)*pre_open_fo['iVal'] + (0.1/60000)*pre_open_fo['mktCap']
-pre_open_fo.sort_values(by=['weight'],ascending=False,inplace=True)
-scrips_fo = pre_open_fo.iloc[:5,:].index.values.tolist() # change the number after iloc to get required numbers of tickers
-
+scrips_fo = pre_open_fo['perChn'].abs().sort_values(ascending=False).index.values.tolist()[:3]
+pre_open_fo.sort_values(by=['ratio'],ascending=False,inplace=True)
+for t in pre_open_fo.index.values.tolist():
+    if t not in scrips_fo:
+        scrips_fo.append(t)
+        if len(scrips_fo) ==5:
+            break
 
 def placeOrder(symbol, exchange, side, quantity):
     exchange = "NSE_EQ"
@@ -80,21 +85,28 @@ def renko_bricks(DF):
     renko_df.columns = ["close","cp","high","low","open","date","volume"]
     renko_df = renko_df.iloc[:,[0,2,3,4,5]]
     renko = Renko(renko_df)
-    renko.brick_size = max(1,int(renko_df['close'].max()*0.003))
+    if renko_df["close"].values[-1] >= 90:
+        renko.brick_size = max(1,int(renko_df['close'].max()*0.003))
+    elif 30 <= renko_df["close"].values[-1] < 90:
+        renko.brick_size = 0.5
+    else:
+        renko.brick_size = 0.2
     df = renko.get_bricks()
     return df
 
 def main_nfty():
-    global db, capital
+    global db, capital, scrips_nfty
     attempt = 0
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
+            pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
             break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
-    for ticker in scrips_nfty:
+    iter_nifty = scrips_nfty.copy()
+    for ticker in iter_nifty:
         buy_status = False
         sell_status = False
         try:
@@ -110,9 +122,17 @@ def main_nfty():
                     if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                         buy_status = True
                         quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                            placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                            scrips_nfty.remove(ticker)
+                            continue
                     if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
                         sell_status = True   
                         quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                            placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                            scrips_nfty.remove(ticker)
+                            continue
             if not buy_status and not sell_status:
                 if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
                     placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
@@ -132,16 +152,18 @@ def main_nfty():
             print("API Issue......")
 
 def main_fo():
-    global db, capital
+    global db, capital, scrips_fo
     attempt = 0
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
+            pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
             break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
-    for ticker in scrips_fo:
+    iter_fo = scrips_fo.copy()
+    for ticker in iter_fo:
         buy_status = False
         sell_status = False
         try:
@@ -157,9 +179,17 @@ def main_fo():
                     if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                         buy_status = True
                         quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                            placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                            scrips_fo.remove(ticker)
+                            continue
                     if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
                         sell_status = True   
                         quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                            placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                            scrips_fo.remove(ticker)
+                            continue
             if not buy_status and not sell_status:
                 if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
                     placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
