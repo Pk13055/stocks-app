@@ -28,7 +28,7 @@ url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/n
 nse = requests.get(url).text
 nse = json.loads(nse)['data']
 df = pd.DataFrame(nse)
-pre_open_nfty = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
+pre_open_nfty = df.copy().loc[:,['symbol','perChn','iVal','iep']]
 pre_open_nfty.set_index('symbol', drop=True, inplace=True)
 toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
 pre_open_nfty = pre_open_nfty.applymap(toFloat)
@@ -45,12 +45,13 @@ df = pd.DataFrame(nse)
 scrips_fo = []
 pre_open_fo = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
 pre_open_fo.set_index('symbol', drop=True, inplace=True)
-toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
-pre_open_fo = pre_open_fo.applymap(toFloat)
 pre_open_fo.drop(pre_open_nfty.index,inplace=True)
+toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
+scrips_fo = pre_open_fo['perChn'].apply(toFloat).abs().sort_values(ascending=False).index.values.tolist()[:3]
+pre_open_fo = pre_open_fo[pre_open_fo['mktCap']!='-']
+pre_open_fo = pre_open_fo.applymap(toFloat)
 pre_open_fo['ratio'] = pre_open_fo['iVal']/pre_open_fo['mktCap']
 pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
-scrips_fo = pre_open_fo['perChn'].abs().sort_values(ascending=False).index.values.tolist()[:3]
 pre_open_fo.sort_values(by=['ratio'],ascending=False,inplace=True)
 for t in pre_open_fo.index.values.tolist():
     if t not in scrips_fo:
@@ -100,7 +101,9 @@ def main_nfty():
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
-            pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
+            if len(pos_df)>0:
+                pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
+                pos_df['realized_profit'].apply(lambda x: 0 if x == '' else x)
             break
         except:
             print("can't get position information...attempt =",attempt)
@@ -122,14 +125,14 @@ def main_nfty():
                     if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                         buy_status = True
                         quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
-                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                             scrips_nfty.remove(ticker)
                             continue
                     if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
                         sell_status = True   
                         quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
-                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                             scrips_nfty.remove(ticker)
                             continue
@@ -157,7 +160,9 @@ def main_fo():
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
-            pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
+            if len(pos_df)>0:
+                pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
+                pos_df['realized_profit'].apply(lambda x: 0 if x == '' else x)
             break
         except:
             print("can't get position information...attempt =",attempt)
@@ -179,14 +184,14 @@ def main_fo():
                     if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                         buy_status = True
                         quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
-                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                             scrips_fo.remove(ticker)
                             continue
                     if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
                         sell_status = True   
                         quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
-                        if abs(pos_df[pos_df["symbol"]==ticker]['realized_profit'].values[0] + pos_df[pos_df["symbol"]==ticker]['unrealized_profit'].values[0]) >= 100:
+                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                             scrips_fo.remove(ticker)
                             continue
@@ -209,7 +214,7 @@ def main_fo():
             print("API Issue......")
 
 starttime=time.time()
-timeout = time.time() + 60*345  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*340  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         time.sleep(5)
