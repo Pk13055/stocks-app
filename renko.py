@@ -5,6 +5,7 @@ import pandas as pd
 import datetime as dt
 from stocktrends import Renko
 import requests, json
+import numpy as np
 
 cwd = os.getcwd()
 
@@ -102,8 +103,8 @@ def main_nfty():
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
             if len(pos_df)>0:
-                pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
-                pos_df['realized_profit'].apply(lambda x: 0 if x == '' else x)
+                pos_df['unrealized_profit'] = np.where(pos_df['unrealized_profit']=='',0,pos_df['unrealized_profit'])
+                pos_df['realized_profit'] = np.where(pos_df['realized_profit']=='',0,pos_df['realized_profit'])
             break
         except:
             print("can't get position information...attempt =",attempt)
@@ -161,8 +162,8 @@ def main_fo():
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
             if len(pos_df)>0:
-                pos_df['unrealized_profit'].apply(lambda x: 0 if x == '' else x)
-                pos_df['realized_profit'].apply(lambda x: 0 if x == '' else x)
+                pos_df['unrealized_profit'] = np.where(pos_df['unrealized_profit']=='',0,pos_df['unrealized_profit'])
+                pos_df['realized_profit'] = np.where(pos_df['realized_profit']=='',0,pos_df['realized_profit'])
             break
         except:
             print("can't get position information...attempt =",attempt)
