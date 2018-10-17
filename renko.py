@@ -5,7 +5,6 @@ import pandas as pd
 import datetime as dt
 from stocktrends import Renko
 import requests, json
-import numpy as np
 
 cwd = os.getcwd()
 
@@ -103,9 +102,7 @@ def main_nfty():
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
             if len(pos_df)>0:
-                pos_df['unrealized_profit'] = np.where(pos_df['unrealized_profit']=='',0,pos_df['unrealized_profit'])
-                pos_df['realized_profit'] = np.where(pos_df['realized_profit']=='',0,pos_df['realized_profit'])
-            break
+                break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
@@ -126,6 +123,10 @@ def main_nfty():
                     if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                         buy_status = True
                         quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                        if pos['realized_profit'].reset_index().iloc[0,-1] == '':
+                            pos['realized_profit'] == 0
+                        if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
+                            pos['unrealized_profit'] == 0
                         if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                             scrips_nfty.remove(ticker)
@@ -133,6 +134,10 @@ def main_nfty():
                     if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
                         sell_status = True   
                         quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+                        if pos['realized_profit'].reset_index().iloc[0,-1] == '':
+                            pos['realized_profit'] == 0
+                        if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
+                            pos['unrealized_profit'] == 0
                         if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                             placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                             scrips_nfty.remove(ticker)
@@ -162,9 +167,7 @@ def main_fo():
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
             if len(pos_df)>0:
-                pos_df['unrealized_profit'] = np.where(pos_df['unrealized_profit']=='',0,pos_df['unrealized_profit'])
-                pos_df['realized_profit'] = np.where(pos_df['realized_profit']=='',0,pos_df['realized_profit'])
-            break
+                break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
