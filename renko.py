@@ -1,4 +1,4 @@
-from upstox_api.api import Upstox, datetime, OHLCInterval, TransactionType, OrderType, ProductType, DurationType
+from upstox_api.api import Upstox, OHLCInterval, TransactionType, OrderType, ProductType, DurationType
 import time
 import os
 import pandas as pd
@@ -101,8 +101,7 @@ def main_nfty():
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
-            if len(pos_df)>0:
-                break
+            break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
@@ -123,9 +122,9 @@ def main_nfty():
                     buy_status = True
                     quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
                     if pos['realized_profit'].reset_index().iloc[0,-1] == '':
-                        pos['realized_profit'] == 0
+                        pos['realized_profit'] = 0
                     if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
-                        pos['unrealized_profit'] == 0
+                        pos['unrealized_profit'] = 0
                     if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                         scrips_nfty.remove(ticker)
@@ -134,9 +133,9 @@ def main_nfty():
                     sell_status = True   
                     quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
                     if pos['realized_profit'].reset_index().iloc[0,-1] == '':
-                        pos['realized_profit'] == 0
+                        pos['realized_profit'] = 0
                     if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
-                        pos['unrealized_profit'] == 0
+                        pos['unrealized_profit'] = 0
                     if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                         scrips_nfty.remove(ticker)
@@ -163,8 +162,7 @@ def main_fo():
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
-            if len(pos_df)>0:
-                break
+            break
         except:
             print("can't get position information...attempt =",attempt)
             attempt+=1
@@ -172,50 +170,56 @@ def main_fo():
     for ticker in iter_fo:
         buy_status = False
         sell_status = False
-        try:
-            scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
-            message = fetchOHLC(scrip)
-            df = pd.DataFrame(message)
-            df["timestamp"] = pd.to_datetime(df["timestamp"]/1000,unit='s')+ pd.Timedelta('05:30:00')
-            renko_df = renko_bricks(df)
-            quantity = int(capital/df["close"].values[-1])
-            if len(pos_df)>0:
-                pos = pos_df[pos_df["symbol"]==ticker]
-                if len(pos)>0: 
-                    if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
-                        buy_status = True
-                        quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
-                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
-                            placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
-                            scrips_fo.remove(ticker)
-                            continue
-                    if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
-                        sell_status = True   
-                        quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
-                        if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
-                            placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
-                            scrips_fo.remove(ticker)
-                            continue
-            if not buy_status and not sell_status:
-                if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
-                elif not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
-            if buy_status:
-                if not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, 2*quantity)
-                elif not renko_df["uptrend"].values[-1] or not renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
-            if sell_status:
-                if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, 2*quantity)
-                elif renko_df["uptrend"].values[-1] or renko_df["uptrend"].values[-2]:
-                    placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
-        except:
-            print("API Issue......")
+        scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
+        message = fetchOHLC(scrip)
+        df = pd.DataFrame(message)
+        df["timestamp"] = pd.to_datetime(df["timestamp"]/1000,unit='s')+ pd.Timedelta('05:30:00')
+        renko_df = renko_bricks(df)
+        quantity = int(capital/df["close"].values[-1])
+        if len(pos_df)>0:
+            pos = pos_df[pos_df["symbol"]==ticker]
+            if len(pos)>0: 
+                if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
+                    buy_status = True
+                    quantity = int((pos["buy_quantity"]-pos["sell_quantity"]).values[-1])
+                    if pos['realized_profit'].reset_index().iloc[0,-1] == '':
+                        pos['realized_profit'] = 0
+                    if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
+                        pos['unrealized_profit'] = 0
+                    if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
+                        placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                        scrips_fo.remove(ticker)
+                        continue
+                if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
+                    sell_status = True   
+                    quantity = int((pos["sell_quantity"]-pos["buy_quantity"]).values[-1])
+                    if pos['realized_profit'].reset_index().iloc[0,-1] == '':
+                        pos['realized_profit'] = 0
+                    if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
+                        pos['unrealized_profit'] = 0
+                    if abs(pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) >= 100:
+                        placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                        scrips_fo.remove(ticker)
+                        continue
+        if not buy_status and not sell_status:
+            if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+            elif not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+        if buy_status:
+            if not renko_df["uptrend"].values[-1] and not renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, 2*quantity)
+            elif not renko_df["uptrend"].values[-1] or not renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+        if sell_status:
+            if renko_df["uptrend"].values[-1] and renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, 2*quantity)
+            elif renko_df["uptrend"].values[-1] or renko_df["uptrend"].values[-2]:
+                placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+
 
 starttime=time.time()
-timeout = time.time() + 60*340  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*300  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         time.sleep(5)
