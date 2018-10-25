@@ -22,6 +22,7 @@ upstoxAPI = Upstox(config['apiKey'], config['accessToken'])
 upstoxAPI.get_master_contract('NSE_EQ')
 
 capital = 5000 #max capital allocated to each stock
+exclude = ['HINDPETRO'] #excluded tickers
 
 # Get the tickers from Non NIFTY FnO pre market movers
 url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/fo.json' #fo.json for non nifty stocks as well
@@ -29,10 +30,13 @@ nse = requests.get(url).text
 nse = json.loads(nse)['data']
 df = pd.DataFrame(nse)
 scrips_fo = []
-pre_open_fo = df.copy().loc[:,['mktCap','symbol','perChn','iVal','iep']]
+pre_open_fo = df.copy().loc[:,['symbol','perChn','iVal','iep']] #removed mktCap due to data integrity issue and not using it anyways
 pre_open_fo.set_index('symbol', drop=True, inplace=True)
+pre_open_fo.drop(exclude,inplace=True)
 toFloat = lambda x: float(x.replace(",","")) if "," in x else float(x)
-pre_open_fo = pre_open_fo['perChn'].apply(toFloat).abs().sort_values(ascending=False)
+pre_open_fo = pre_open_fo.applymap(toFloat)
+pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
+pre_open_fo = pre_open_fo['perChn'].abs().sort_values(ascending=False)
 max_chng_ticker = pre_open_fo.index.values[0]
 pre_open_fo = pre_open_fo[pre_open_fo>3]
 if len(pre_open_fo>0):
