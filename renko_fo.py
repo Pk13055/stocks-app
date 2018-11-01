@@ -38,7 +38,7 @@ pre_open_fo = pre_open_fo.applymap(toFloat)
 pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
 pre_open_fo = pre_open_fo['perChn'].abs().sort_values(ascending=False)
 max_chng_ticker = pre_open_fo.index.values[0]
-pre_open_fo = pre_open_fo[pre_open_fo>3]
+pre_open_fo = pre_open_fo[pre_open_fo>=3]
 if len(pre_open_fo>0):
     n = min(6,len(pre_open_fo))
     scrips_fo = pre_open_fo.index.values.tolist()[:n]
@@ -89,7 +89,9 @@ def main_fo():
             print("can't get position information...attempt =",attempt)
             attempt+=1
     iter_fo = scrips_fo.copy()
+    print("tickers remaining..",iter_fo)
     for ticker in iter_fo:
+        print("starting passthrough for.....",ticker)
         buy_status = False
         sell_status = False
         scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
@@ -111,6 +113,7 @@ def main_fo():
                         pos['unrealized_profit'] = 0
                     if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+                        print("removing ticker..",ticker)
                         scrips_fo.remove(ticker)
                         continue
                 if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
@@ -122,6 +125,7 @@ def main_fo():
                         pos['unrealized_profit'] = 0
                     if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+                        print("removing ticker..",ticker)
                         scrips_fo.remove(ticker)
                         continue
         if not buy_status and not sell_status:
@@ -139,8 +143,8 @@ def main_fo():
                 placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, 2*quantity)
             elif renko_df["uptrend"].values[-1] or renko_df["uptrend"].values[-2]:
                 placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
-
-
+        print("ending passthrough for.....",ticker)
+        
 starttime=time.time()
 timeout = time.time() + 60*345  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
