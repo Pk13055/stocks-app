@@ -99,7 +99,8 @@ def main_fo():
         renko_df = renko_bricks(df)
         quantity = int(capital/df["close"].values[-1])
         if len(pos_df)>0:
-            pos = pos_df[pos_df["symbol"]==ticker]
+            temp = pos_df[pos_df["symbol"]==ticker]
+            pos = temp.copy()
             if len(pos)>0: 
                 if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                     buy_status = True

@@ -79,7 +79,8 @@ def main_fo():
     renko_df = renko_bricks(df)
     quantity = 10
     if len(pos_df)>0:
-        pos = pos_df[pos_df["symbol"]==fut_contract]
+        temp = pos_df[pos_df["symbol"]==fut_contract]
+        pos = temp.copy()
         if len(pos)>0: 
             if (pos["buy_quantity"]-pos["sell_quantity"]).values[-1] >0:
                 buy_status = True
@@ -117,7 +118,7 @@ def main_fo():
 
 
 starttime=time.time()
-timeout = time.time() + 60*690  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*330  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout and not shut_down_switch:
     try:
         time.sleep(2)

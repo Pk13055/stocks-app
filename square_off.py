@@ -17,6 +17,7 @@ upstoxAPI = Upstox(config['apiKey'], config['accessToken'])
 
 # get master contract for NSE EQ
 upstoxAPI.get_master_contract('NSE_EQ')
+upstoxAPI.get_master_contract('MCX_FO')
 
 def placeOrder(symbol, exchange, side, quantity):
     exchange = "NSE_EQ"
@@ -36,7 +37,7 @@ def placeOrder(symbol, exchange, side, quantity):
 		None  # trailing_ticks
 	)
 
-time.sleep(285)
+time.sleep(60)
 
 attempt = 0
 while attempt<10:
