@@ -63,6 +63,7 @@ def renko_bricks(DF):
 def main_fo():
     global shut_down_switch, fut_exchange, fut_contract
     attempt = 0
+    tr = 0
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
@@ -73,7 +74,13 @@ def main_fo():
     buy_status = False
     sell_status = False
     scrip = upstoxAPI.get_instrument_by_symbol(fut_exchange, fut_contract)
-    message = fetchOHLC(scrip)
+    while tr < 10:
+        try:
+            message = fetchOHLC(scrip)
+            break
+        except:
+            print("uanble to fetch hisorical data")
+            tr+=1
     df = pd.DataFrame(message)
     df["timestamp"] = pd.to_datetime(df["timestamp"]/1000,unit='s')+ pd.Timedelta('05:30:00')
     renko_df = renko_bricks(df)
@@ -118,7 +125,7 @@ def main_fo():
 
 
 starttime=time.time()
-timeout = time.time() + 60*330  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*360  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout and not shut_down_switch:
     try:
         time.sleep(2)

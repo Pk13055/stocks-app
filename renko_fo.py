@@ -81,6 +81,7 @@ def renko_bricks(DF):
 def main_fo():
     global db, capital, scrips_fo
     attempt = 0
+    tr = 0
     while attempt<10:
         try:
             pos_df = pd.DataFrame(upstoxAPI.get_positions())
@@ -95,7 +96,13 @@ def main_fo():
         buy_status = False
         sell_status = False
         scrip = upstoxAPI.get_instrument_by_symbol('NSE_EQ', ticker)
-        message = fetchOHLC(scrip)
+        while tr<10:
+            try:
+                message = fetchOHLC(scrip)
+                break
+            except:
+                print("uanble to fetch hisorical data for ticker ",ticker)
+                tr+=1
         df = pd.DataFrame(message)
         df["timestamp"] = pd.to_datetime(df["timestamp"]/1000,unit='s')+ pd.Timedelta('05:30:00')
         renko_df = renko_bricks(df)
@@ -114,6 +121,8 @@ def main_fo():
                     if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                         print("removing ticker..",ticker)
+                        print("realized profit = ",pos['realized_profit'].values[0])
+                        print("unrealized profit = ",pos['unrealized_profit'].values[0])
                         scrips_fo.remove(ticker)
                         continue
                 if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
@@ -126,6 +135,8 @@ def main_fo():
                     if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                         print("removing ticker..",ticker)
+                        print("realized profit = ",pos['realized_profit'].values[0])
+                        print("unrealized profit = ",pos['unrealized_profit'].values[0])
                         scrips_fo.remove(ticker)
                         continue
         if not buy_status and not sell_status:

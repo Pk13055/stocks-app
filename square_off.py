@@ -20,7 +20,6 @@ upstoxAPI.get_master_contract('NSE_EQ')
 upstoxAPI.get_master_contract('MCX_FO')
 
 def placeOrder(symbol, exchange, side, quantity):
-    exchange = "NSE_EQ"
     scrip = upstoxAPI.get_instrument_by_symbol(exchange, symbol)
     upstoxAPI.place_order(
 		side,  # transaction_type
@@ -47,12 +46,18 @@ while attempt<10:
     except:
         print("can't get position...attempt =",attempt)
         attempt+=1
-        
+      
 for i in range(len(pos_df)):
     ticker = pos_df["symbol"].values[i]
     if (pos_df["buy_quantity"]-pos_df["sell_quantity"]).values[i] >0:
         quantity = int((pos_df["buy_quantity"]-pos_df["sell_quantity"]).values[i])
-        placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+        if pos_df["exchange"].values[i] == "NSE_EQ":
+            placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
+        elif pos_df["exchange"].values[i] == "MCX_FO":
+            placeOrder(ticker, 'MCX_FO', TransactionType.Sell, quantity)
     if (pos_df["sell_quantity"]-pos_df["buy_quantity"]).values[i] >0:
         quantity = int((pos_df["sell_quantity"]-pos_df["buy_quantity"]).values[i])
-        placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+        if pos_df["exchange"].values[i] == "NSE_EQ":
+            placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
+        elif pos_df["exchange"].values[i] == "MCX_FO":
+            placeOrder(ticker, 'MCX_FO', TransactionType.Buy, quantity)
