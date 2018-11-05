@@ -54,10 +54,12 @@ for i in range(len(pos_df)):
         if pos_df["exchange"].values[i] == "NSE_EQ":
             placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
         elif pos_df["exchange"].values[i] == "MCX_FO":
+            quantity = 10
             placeOrder(ticker, 'MCX_FO', TransactionType.Sell, quantity)
     if (pos_df["sell_quantity"]-pos_df["buy_quantity"]).values[i] >0:
         quantity = int((pos_df["sell_quantity"]-pos_df["buy_quantity"]).values[i])
         if pos_df["exchange"].values[i] == "NSE_EQ":
             placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
         elif pos_df["exchange"].values[i] == "MCX_FO":
+            quantity = 10
             placeOrder(ticker, 'MCX_FO', TransactionType.Buy, quantity)
