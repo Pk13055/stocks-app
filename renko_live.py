@@ -25,6 +25,8 @@ fut_exchange = "MCX_FO"
 fut_contract = "CRUDEOILM18NOVFUT"
 ltp_df = [] #initialize list which will store series of ltp
 renko_bars = [0,0]
+base_up = []
+base_dn = []
 
 
 def placeOrder(contract, exchange, side, quantity):
@@ -45,34 +47,37 @@ def placeOrder(contract, exchange, side, quantity):
 	)
     
 
-def renko_live(ltp_list):
-    if len(ltp_list)<20:
-        return 0
-    else:
-        brick = 7
-        base_up = [ltp_list[0]]
-        base_dn = [ltp_list[0] - brick]
-        bars = []
-        for i in range(1,len(ltp_list)):
-            if ltp_list[i] >= base_up[-1]:
-                diff = ltp_list[i] - base_up[-1]
-                bars.append(int(diff/brick))
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-            if base_dn[-1] < ltp_list[i] < base_up[-1]:
-                bars.append(0)
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-            if ltp_list[i] <= base_dn[-1]:
-                diff = ltp_list[i] - base_dn[-1]
-                bars.append(int(diff/brick))
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-        return bars[-1]
+def renko_live(ltp):
+    global base_up, base_dn
+    brick = 4
+    if len(base_up) == 0:
+        base_up = [ltp]
+    if len(base_dn) == 0:
+        base_dn = [ltp - brick]
+    bars = []
+    if ltp >= base_up[-1]:
+        diff = ltp - base_up[-1]
+        bars.append(int(diff/brick))
+        base_up.append(base_up[-1] + bars[-1]*brick)
+        base_dn.append(base_up[-1] - brick)
+    elif base_dn[-1] < ltp < base_up[-1]:
+        bars.append(0)
+        base_up.append(base_up[-1] + bars[-1]*brick)
+        base_dn.append(base_up[-1] - brick)
+    elif ltp <= base_dn[-1]:
+        diff = ltp - base_dn[-1]
+        bars.append(int(diff/brick))
+        base_up.append(base_up[-1] + bars[-1]*brick)
+        base_dn.append(base_up[-1] - brick)
+    if len(base_up) > 20:
+        del base_up[0]
+    if len(base_dn) > 20:
+        del base_dn[0]
+    return bars[-1]
     
 
 def main():
-    global shut_down_switch, fut_exchange, fut_contract, ltp_df, renko_bars
+    global shut_down_switch, fut_exchange, fut_contract, ltp_df, renko_bars, base_up, base_dn
     attempt = 0
     tr = 0
     buy_status = False
@@ -96,10 +101,12 @@ def main():
     ltp_df.append(message['ltp'])
     if len(ltp_df)>20:
         del ltp_df[0]
-    if renko_live(ltp_df) !=0:
-        renko_bars.append(renko_live(ltp_df))
+    latest_bar = renko_live(ltp_df[-1])
+    if latest_bar !=0:
+        renko_bars.append(latest_bar)
     print(renko_bars)
-    print(ltp_df)
+    if len(ltp_df)>0 and len(base_dn)>0 and len(base_up)>0:
+        print("last price =",ltp_df[-1],"; bar low =",base_dn[-1],"; bar high =",base_up[-1])
     if len(pos_df)>0:
         temp = pos_df[pos_df["symbol"]==fut_contract]
         pos = temp.copy()
@@ -111,7 +118,7 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1000:
-                    placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+                    #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
             if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
@@ -121,29 +128,29 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1000:
-                    placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+                    #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
     if not buy_status and not sell_status:
         if renko_bars[-1]>=2 or (renko_bars[-1]>0 and renko_bars[-2]==1):
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("new long position")
         elif renko_bars[-1]<=-2 or (renko_bars[-1]<0 and renko_bars[-2]==-1):
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("new short position")
     if buy_status:
         if renko_bars[-1]<=-2:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
             print("changing long position to short position")
         elif renko_bars[-1]==-1:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("closing out long position")
     if sell_status:
         if renko_bars[-1]>=2:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
             print("changing short position to long position")
         elif renko_bars[-1]==1:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("closing out short position")
 
 starttime=time.time()
