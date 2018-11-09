@@ -118,7 +118,7 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1000:
-                    #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+                    placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
             if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
@@ -128,29 +128,29 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1000:
-                    #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+                    placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
     if not buy_status and not sell_status:
         if renko_bars[-1]>=2 or (renko_bars[-1]>0 and renko_bars[-2]==1):
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("new long position")
         elif renko_bars[-1]<=-2 or (renko_bars[-1]<0 and renko_bars[-2]==-1):
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("new short position")
     if buy_status:
         if renko_bars[-1]<=-2:
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
             print("changing long position to short position")
         elif renko_bars[-1]==-1:
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("closing out long position")
     if sell_status:
         if renko_bars[-1]>=2:
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
             print("changing short position to long position")
         elif renko_bars[-1]==1:
-            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("closing out short position")
 
 starttime=time.time()
