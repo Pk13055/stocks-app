@@ -44,6 +44,8 @@ if len(pre_open_fo>0):
     scrips_fo = pre_open_fo.index.values.tolist()[:n]
 else:
     scrips_fo = [max_chng_ticker]
+scrips_fo = ['YESBANK','ADANIPORTS','ASIANPAINT','SUNPHARMA','WIPRO','INDIGO','PEL','BANKINDIA','UNIONBANK','SRF']
+
 
 for s in scrips_fo:
     renko_bars_df[s] = [0,0]
@@ -75,13 +77,16 @@ def renko_live(ltp_list):
         base_dn = [ltp_list[0] - brick]
         bars = []
         for i in range(1,len(ltp_list)):
-            delta = ltp_list[i] - ltp_list[i-1]
-            if delta >= 0:
+            if ltp_list[i] >= base_up[-1]:
                 diff = ltp_list[i] - base_up[-1]
                 bars.append(int(diff/brick))
                 base_up.append(base_up[-1] + bars[-1]*brick)
                 base_dn.append(base_up[-1] - brick)
-            if delta < 0:
+            if base_dn[-1] < ltp_list[i] < base_up[-1]:
+                bars.append(0)
+                base_up.append(base_up[-1] + bars[-1]*brick)
+                base_dn.append(base_up[-1] - brick)
+            if ltp_list[i] <= base_dn[-1]:
                 diff = ltp_list[i] - base_dn[-1]
                 bars.append(int(diff/brick))
                 base_up.append(base_up[-1] + bars[-1]*brick)
@@ -135,7 +140,7 @@ def main_fo():
                         pos['realized_profit'] = 0
                     if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                         pos['unrealized_profit'] = 0
-                    if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
+                    if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -50 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Sell, quantity)
                         print("removing ticker..",ticker)
                         print("realized profit = ",pos['realized_profit'].values[0])
@@ -149,7 +154,7 @@ def main_fo():
                         pos['realized_profit'] = 0
                     if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                         pos['unrealized_profit'] = 0
-                    if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -100 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
+                    if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -50 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 200:
                         placeOrder(ticker, 'NSE_EQ', TransactionType.Buy, quantity)
                         print("removing ticker..",ticker)
                         print("realized profit = ",pos['realized_profit'].values[0])
@@ -179,7 +184,7 @@ def main_fo():
                 print("closing out short position")
         
 starttime=time.time()
-timeout = time.time() + 60*30  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*60  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         main_fo()
