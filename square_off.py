@@ -36,7 +36,7 @@ def placeOrder(symbol, exchange, side, quantity):
 		None  # trailing_ticks
 	)
 
-time.sleep(60)
+time.sleep(10)
 
 attempt = 0
 while attempt<10:
