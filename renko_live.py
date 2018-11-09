@@ -49,7 +49,7 @@ def renko_live(ltp_list):
     if len(ltp_list)<20:
         return 0
     else:
-        brick = 0.1
+        brick = 7
         base_up = [ltp_list[0]]
         base_dn = [ltp_list[0] - brick]
         bars = []
@@ -94,8 +94,9 @@ def main():
     if len(ltp_df)>20:
         del ltp_df[0]
     if renko_live(ltp_df) !=0:
-        renko_bars.append(renko_live(ltp_df)[-1])
+        renko_bars.append(renko_live(ltp_df))
         print(renko_bars)
+        print(ltp_df)
     if len(pos_df)>0:
         temp = pos_df[pos_df["symbol"]==fut_contract]
         pos = temp.copy()
@@ -107,7 +108,7 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1500:
-                    placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+                    #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
             if (pos["sell_quantity"]-pos["buy_quantity"]).values[-1] >0:
@@ -117,29 +118,29 @@ def main():
                 if pos['unrealized_profit'].reset_index().iloc[0,-1] == '':
                     pos['unrealized_profit'] = 0
                 if (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) < -600 or (pos['realized_profit'].values[0] + pos['unrealized_profit'].values[0]) > 1500:
-                    placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+                    #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
                     print("circuit hit...shutting down")
                     shut_down_switch = True
     if not buy_status and not sell_status:
         if renko_bars[-1]>=2 or (renko_bars[-1]>0 and renko_bars[-2]==1):
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("new long position")
         elif renko_bars[-1]<=-2 or (renko_bars[-1]<0 and renko_bars[-2]==-1):
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("new short position")
     if buy_status:
         if renko_bars[-1]<=-2:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, 2*quantity)
             print("changing long position to short position")
         elif renko_bars[-1]==-1:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Sell, quantity)
             print("closing out long position")
     if sell_status:
         if renko_bars[-1]>=2:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, 2*quantity)
             print("changing short position to long position")
         elif renko_bars[-1]==1:
-            placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
+            #placeOrder(fut_contract, fut_exchange, TransactionType.Buy, quantity)
             print("closing out short position")
 
 starttime=time.time()
@@ -147,7 +148,8 @@ timeout = time.time() + 60*60  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout and not shut_down_switch:
     try:
         main()
-        time.sleep(1 - ((time.time() - starttime) % 1.0))
+        #time.sleep(1 - ((time.time() - starttime) % 1.0))
+        time.sleep(1)
     except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
