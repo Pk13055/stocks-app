@@ -23,6 +23,8 @@ capital = 5000 #max capital allocated to each stock
 exclude = ['HINDPETRO'] #excluded tickers
 ltp_df = {} #initialize dictionary which will store series of ltp of each ticker
 renko_bars_df = {}
+base_up = {}
+base_dn = {}
 
 # Get the tickers from Non NIFTY FnO pre market movers
 url = 'https://www.nseindia.com/live_market/dynaContent/live_analysis/pre_open/fo.json' #fo.json for non nifty stocks as well
@@ -38,14 +40,7 @@ pre_open_fo = pre_open_fo.applymap(toFloat)
 pre_open_fo = pre_open_fo[pre_open_fo['iep']<0.95*capital]
 pre_open_fo = pre_open_fo['perChn'].abs().sort_values(ascending=False)
 max_chng_ticker = pre_open_fo.index.values[0]
-pre_open_fo = pre_open_fo[pre_open_fo>=2]
-if len(pre_open_fo>0):
-    n = min(6,len(pre_open_fo))
-    scrips_fo = pre_open_fo.index.values.tolist()[:n]
-else:
-    scrips_fo = [max_chng_ticker]
-scrips_fo = ['YESBANK','ADANIPORTS','ASIANPAINT','SUNPHARMA','WIPRO','INDIGO','PEL','BANKINDIA','UNIONBANK','SRF']
-
+scrips_fo = pre_open_fo.index.values.tolist()[:10]
 
 for s in scrips_fo:
     renko_bars_df[s] = [0,0]
@@ -67,34 +62,37 @@ def placeOrder(symbol, exchange, side, quantity):
 		None  # trailing_ticks
 	)
 
-def renko_live(ltp_list):
-    if len(ltp_list)<20:
-        return 0
-    else:
-        num = int(capital/ltp_list[-1])
-        brick = round((12/num),2)
-        base_up = [ltp_list[0]]
-        base_dn = [ltp_list[0] - brick]
-        bars = []
-        for i in range(1,len(ltp_list)):
-            if ltp_list[i] >= base_up[-1]:
-                diff = ltp_list[i] - base_up[-1]
-                bars.append(int(diff/brick))
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-            if base_dn[-1] < ltp_list[i] < base_up[-1]:
-                bars.append(0)
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-            if ltp_list[i] <= base_dn[-1]:
-                diff = ltp_list[i] - base_dn[-1]
-                bars.append(int(diff/brick))
-                base_up.append(base_up[-1] + bars[-1]*brick)
-                base_dn.append(base_up[-1] - brick)
-        return bars[-1]
+def renko_live(ltp,ticker):
+    global base_up, base_dn
+    num = int(capital/ltp)
+    brick = round((12/num),2)
+    if ticker not in base_up.keys():
+        base_up[ticker] = [ltp]
+    if ticker not in base_dn.keys():
+        base_dn[ticker] = [ltp - brick]
+    bars = []
+    if ltp >= base_up[ticker][-1]:
+        diff = ltp - base_up[ticker][-1]
+        bars.append(int(diff/brick))
+        base_up[ticker].append(base_up[ticker][-1] + bars[-1]*brick)
+        base_dn[ticker].append(base_up[ticker][-1] - brick)
+    elif base_dn[ticker][-1] < ltp < base_up[ticker][-1]:
+        bars.append(0)
+        base_up[ticker].append(base_up[ticker][-1] + bars[-1]*brick)
+        base_dn[ticker].append(base_up[ticker][-1] - brick)
+    elif ltp <= base_dn[ticker][-1]:
+        diff = ltp - base_dn[ticker][-1]
+        bars.append(int(diff/brick))
+        base_up[ticker].append(base_up[ticker][-1] + bars[-1]*brick)
+        base_dn[ticker].append(base_up[ticker][-1] - brick)
+    if len(base_up[ticker]) > 20:
+        del base_up[ticker][0]
+    if len(base_dn[ticker]) > 20:
+        del base_dn[ticker][0]
+    return bars[-1]
     
 def main_fo():
-    global capital, scrips_fo, renko_bars_df, ltp_df
+    global capital, scrips_fo, renko_bars_df, ltp_df, base_up, base_dn
     attempt = 0
     tr = 0
     while attempt<10:
@@ -125,10 +123,12 @@ def main_fo():
         quantity = int(capital/ltp_df[ticker][-1])
         if len(ltp_df[ticker])>20:
             del ltp_df[ticker][0]
-        if renko_live(ltp_df[ticker]) !=0:
-            renko_bars_df[ticker].append(renko_live(ltp_df[ticker]))
+        latest_bar = renko_live(ltp_df[ticker][-1],ticker)
+        if latest_bar !=0:
+            renko_bars_df[ticker].append(latest_bar)        
         print(renko_bars_df[ticker])
-        print(ltp_df[ticker])
+        if len(ltp_df[ticker])>0 and len(base_dn[ticker])>0 and len(base_up[ticker])>0:
+            print("last price =",ltp_df[ticker][-1],"; bar low =",base_dn[ticker][-1],"; bar high =",base_up[ticker][-1])
         if len(pos_df)>0:
             temp = pos_df[pos_df["symbol"]==ticker]
             pos = temp.copy()
@@ -184,7 +184,7 @@ def main_fo():
                 print("closing out short position")
         
 starttime=time.time()
-timeout = time.time() + 60*60  # 60 seconds times 360 meaning 6 hrs
+timeout = time.time() + 60*30  # 60 seconds times 360 meaning 6 hrs
 while time.time() <= timeout:
     try:
         main_fo()
