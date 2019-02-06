@@ -126,28 +126,28 @@ def main():
         open_pos = con.get_open_positions()
         pos_price = trade_signal_df(ohlc)[1][-1]
         
-        if len(open_pos)>0 and open_pos.iloc[open_pos["time"].argmax(),:]["isBuy"]==True:
-            if open_pos.iloc[open_pos["time"].argmax(),:]["close"] > open_pos.iloc[open_pos["time"].argmax(),:]["open"] + 1.5*lmt:
-                trade_id = open_pos.iloc[open_pos["time"].argmax(),:]["tradeId"]
-                sl = open_pos.iloc[open_pos["time"].argmax(),:]["close"] - 0.0002
+        if len(open_pos)>0 and open_pos["isBuy"][0]==True:
+            if open_pos["close"][0] > open_pos["open"][0] + 1.5*lmt:
+                trade_id = open_pos["tradeId"][0]
+                sl = open_pos["close"][0] - 0.0002
                 con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=1)
-        elif len(open_pos)>0 and open_pos.iloc[open_pos["time"].argmax(),:]["isBuy"]==False:
-            if open_pos.iloc[open_pos["time"].argmax(),:]["close"] < open_pos.iloc[open_pos["time"].argmax(),:]["open"] - 1.5*lmt:
-                trade_id = open_pos.iloc[open_pos["time"].argmax(),:]["tradeId"]
-                sl = open_pos.iloc[open_pos["time"].argmax(),:]["close"] + 0.0002
+        elif len(open_pos)>0 and open_pos["isBuy"][0]==False:
+            if open_pos["close"][0] < open_pos["open"][0] - 1.5*lmt:
+                trade_id = open_pos["tradeId"][0]
+                sl = open_pos["close"][0] + 0.0002
                 con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=1)
         
         if len(trade_signal)>0 and trade_signal[-1] == 'buy':
             if len(open_pos)==0:
                 con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
-            elif len(open_pos)>0 and open_pos.iloc[open_pos["time"].argmax(),:]["currency"]==currency and open_pos["isBuy"][0]==False:
+            elif len(open_pos)>0 and open_pos["currency"][0]==currency and open_pos["isBuy"][0]==False:
                 con.close_all_for_symbol(currency)
                 con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
                 
         if len(trade_signal)>0 and trade_signal[-1] == 'sell':
             if len(open_pos)==0:
                 con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC')
-            elif len(open_pos)>0 and open_pos.iloc[open_pos["time"].argmax(),:]["currency"]==currency and open_pos["isBuy"][0]==True:
+            elif len(open_pos)>0 and open_pos["currency"][0]==currency and open_pos["isBuy"][0]==True:
                 con.close_all_for_symbol(currency)
                 con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC') 
 
