@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
-Demo Strategy implemented on FXCM API
+Renko Technical Strategy implemented on FXCM API
 
 @author: Mayank Rasu
 """
@@ -13,11 +14,11 @@ import statsmodels.api as sm
 import time
 
 #initiating API connection and defining trade parameters
-TOKEN = "fbec83ba39862a5d80026e42eb08af5349a20761"
+TOKEN = "45546754dc6526cdb6d642c85be36ccc26bd849b"
 con = fxcmpy.fxcmpy(access_token = TOKEN, log_level = 'error', server='demo')
-pos_size = 30
+pos_size = 6
 pairs = ['EUR/USD','GBP/USD','USD/CHF','AUD/USD','USD/CAD','EUR/GBP','AUD/NZD']
-lmt = 0.0008
+lmt = 0.0006
 
 def standardize_ser(ser):
     """Function to standardize each column of a dataframe  """
@@ -55,7 +56,7 @@ def renko_bricks(DF):
     renko_df.reset_index(inplace=True)
     renko_df.columns = ["date","open","high","low","close","volume"]
     renko = Renko(renko_df)
-    renko.brick_size = 0.0008
+    renko.brick_size = 0.0006
     df = renko.get_bricks()
     return df
 
@@ -92,8 +93,8 @@ def trade_signal_df(df):
     ohlc_renko['force_index14'] = ((ohlc_renko['Close'] - ohlc_renko['Close'].shift(1))*ohlc_renko['Volume']).ewm(span=14,adjust=False,min_periods=1).mean()
     
     #Identifying Trend in the data using Renko and MACD
-    ohlc_renko['trend'] = np.where(ohlc_renko["bar_num"]>=2,1,
-                          np.where(ohlc_renko["bar_num"]<=-2,-1,0))
+    ohlc_renko['trend'] = np.where(ohlc_renko["bar_num"]>=3,1,
+                          np.where(ohlc_renko["bar_num"]<=-3,-1,0))
     
     #Calculating slopes for relevant curves and trade signal
     ohlc_renko['slope_ema_fast'] = slope2(ohlc_renko['macd_ema_fast'],4)
@@ -104,54 +105,63 @@ def trade_signal_df(df):
                                      (ohlc_renko['slope_ema_fast']>10)&(ohlc_renko['slope_ema_slow']>10)&
                                      (ohlc_renko['slope_ema_fast']>ohlc_renko['slope_ema_slow'])&
                                      (ohlc_renko['slope_macd']>10)&
-                                     (ohlc_renko['slope_force_index']>10)&(ohlc_renko['macd']>ohlc_renko['signal'])&
-                                     (ohlc_renko['macd'].shift(1)<ohlc_renko['signal'].shift(1))&
-                                     (ohlc_renko['macd'].shift(2)<ohlc_renko['signal'].shift(2)),'buy',
+                                     (ohlc_renko['slope_force_index']>10),'buy',
                            np.where((ohlc_renko['trend']==-1)&(ohlc_renko['Close']<ohlc_renko['macd_ema_fast'])&
                                      (ohlc_renko['slope_ema_fast']<-10)&(ohlc_renko['slope_ema_slow']<-10)&
                                      (ohlc_renko['slope_ema_fast']<ohlc_renko['slope_ema_slow'])&
                                      (ohlc_renko['slope_macd']<-10)&
-                                     (ohlc_renko['slope_force_index']<-10)&(ohlc_renko['macd']<ohlc_renko['signal'])&
-                                     (ohlc_renko['macd'].shift(1)>ohlc_renko['signal'].shift(1))&
-                                     (ohlc_renko['macd'].shift(2)>ohlc_renko['signal'].shift(2)),'sell',''))
+                                     (ohlc_renko['slope_force_index']<-10),'sell',''))
     return [ohlc_renko["trade_signal"].tolist(),ohlc_renko["Close"].tolist()]
 
 def main():
     for currency in pairs:
-        data = con.get_candles(currency, period='m1', number=250)
+        data = con.get_candles(currency, period='m5', number=250)
         ohlc = data.iloc[:,[0,1,2,3,8]]
         ohlc.columns = ["Open","Close","High","Low","Volume"]
         trade_signal = trade_signal_df(ohlc)[0]
         trade_signal[:] = (value for value in trade_signal if value != '')
         open_pos = con.get_open_positions()
+        open_pos_cur = open_pos[open_pos["currency"]==currency]
         pos_price = trade_signal_df(ohlc)[1][-1]
-        
-        if len(open_pos)>0 and open_pos["isBuy"].tolist()[0]==True:
-            if open_pos["close"].tolist()[0] > open_pos["open"].tolist()[0] + 1.5*lmt:
-                trade_id = open_pos["tradeId"].tolist()[0]
-                num = int((open_pos["close"].tolist()[0] - open_pos["open"].tolist()[0])/lmt)
-                sl = max(open_pos["stop"].tolist()[0], open_pos["open"].tolist()[0] + 1.5*lmt,open_pos["open"].tolist()[0] + num*lmt)
-                con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
-        elif len(open_pos)>0 and open_pos["isBuy"].tolist()[0]==False:
-            if open_pos["close"].tolist()[0] < open_pos["open"].tolist()[0] - 1.5*lmt:
-                trade_id = open_pos["tradeId"].tolist()[0]
-                num = int((open_pos["open"].tolist()[0] - open_pos["close"].tolist()[0])/lmt)
-                sl = min(open_pos["stop"].tolist()[0], open_pos["open"].tolist()[0] - 1.5*lmt,open_pos["open"].tolist()[0] - num*lmt)
-                con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
-        
+   
+        if len(open_pos_cur)>0:
+            if open_pos_cur["isBuy"].tolist()[0]==True:
+                if open_pos_cur["close"].tolist()[0] > open_pos_cur["open"].tolist()[0] + 1.5*lmt:
+                    trade_id = open_pos_cur["tradeId"].tolist()[0]
+                    num = int((open_pos_cur["close"].tolist()[0] - open_pos_cur["open"].tolist()[0])/lmt)
+                    sl = max(open_pos_cur["stop"].tolist()[0], open_pos_cur["open"].tolist()[0] + 1.5*lmt, open_pos_cur["open"].tolist()[0] + num*lmt)
+                    con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
+                    print("stop loss revised to ",sl," for ",currency)
+        elif len(open_pos_cur)>0:
+            if open_pos_cur["isBuy"].tolist()[0]==False:
+                if open_pos_cur["close"].tolist()[0] < open_pos_cur.tolist()["open"][0] - 1.5*lmt:
+                    trade_id = open_pos_cur["tradeId"].tolist()[0]
+                    num = int((open_pos_cur["open"].tolist()[0] - open_pos_cur["close"].tolist()[0])/lmt)
+                    sl = min(open_pos_cur["stop"].tolist()[0], open_pos_cur["open"].tolist()[0] - 1.5*lmt, open_pos_cur["open"].tolist()[0] - num*lmt)
+                    con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
+                    print("stop loss revised to ",sl," for ",currency)
+                    
         if len(trade_signal)>0 and trade_signal[-1] == 'buy':
-            if len(open_pos)==0:
+            if len(open_pos_cur)==0:
                 con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
-            elif len(open_pos)>0 and open_pos["currency"].tolist()[0]==currency and open_pos["isBuy"].tolist()[0]==False:
-                con.close_all_for_symbol(currency)
-                con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
+                print("new long position initiated for ", currency)
+            elif len(open_pos_cur)>0:
+                if open_pos_cur["isBuy"].tolist()[0]==False:
+                    con.close_all_for_symbol(currency)
+                    print("Existing short position closed for ", currency)
+                    con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
+                    print("new long position initiated for ", currency)
                 
         if len(trade_signal)>0 and trade_signal[-1] == 'sell':
-            if len(open_pos)==0:
+            if len(open_pos_cur)==0:
                 con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC')
-            elif len(open_pos)>0 and open_pos["currency"].tolist()[0]==currency and open_pos["isBuy"].tolist()[0]==True:
-                con.close_all_for_symbol(currency)
-                con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC') 
+                print("new short position initiated for ", currency)
+            elif len(open_pos_cur)>0:
+                if open_pos_cur["isBuy"].tolist()[0]==True:
+                    con.close_all_for_symbol(currency)
+                    print("Existing long position closed for ", currency)
+                    con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC')
+                    print("new short position initiated for ", currency)
 
 # Continuous execution        
 starttime=time.time()
@@ -160,7 +170,7 @@ while time.time() <= timeout:
     try:
         time.sleep(1)
         main()
-        time.sleep(60 - ((time.time() - starttime) % 60.0)) # 5 minute interval between each new execution
+        time.sleep(300 - ((time.time() - starttime) % 300.0)) # 5 minute interval between each new execution
     except KeyboardInterrupt:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
