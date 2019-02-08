@@ -15,7 +15,7 @@ import time
 #initiating API connection and defining trade parameters
 TOKEN = "fbec83ba39862a5d80026e42eb08af5349a20761"
 con = fxcmpy.fxcmpy(access_token = TOKEN, log_level = 'error', server='demo')
-pos_size = 30
+pos_size = 6
 pairs = ['EUR/USD','GBP/USD','USD/CHF','AUD/USD','USD/CAD','EUR/GBP','AUD/NZD']
 lmt = 0.0008
 
@@ -124,6 +124,71 @@ def main():
         trade_signal = trade_signal_df(ohlc)[0]
         trade_signal[:] = (value for value in trade_signal if value != '')
         open_pos = con.get_open_positions()
+        open_pos_cur = open_pos[open_pos["currency"]==currency]
+        pos_price = trade_signal_df(ohlc)[1][-1]
+   
+        if len(open_pos_cur)>0:
+            if open_pos_cur["isBuy"].tolist()[0]==True:
+                if open_pos_cur["close"].tolist()[0] > open_pos_cur["open"].tolist()[0] + 1.5*lmt:
+                    trade_id = open_pos_cur["tradeId"].tolist()[0]
+                    num = int((open_pos_cur["close"].tolist()[0] - open_pos_cur["open"].tolist()[0])/lmt)
+                    sl = max(open_pos_cur["stop"].tolist()[0], open_pos_cur["open"].tolist()[0] + 1.5*lmt, open_pos_cur["open"].tolist()[0] + num*lmt)
+                    con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
+                    print("stop loss revised to ",sl," for ",currency)
+        elif len(open_pos_cur)>0:
+            if open_pos_cur["isBuy"].tolist()[0]==False:
+                if open_pos_cur["close"].tolist()[0] < open_pos_cur.tolist()["open"][0] - 1.5*lmt:
+                    trade_id = open_pos_cur["tradeId"].tolist()[0]
+                    num = int((open_pos_cur["open"].tolist()[0] - open_pos_cur["close"].tolist()[0])/lmt)
+                    sl = min(open_pos_cur["stop"].tolist()[0], open_pos_cur["open"].tolist()[0] - 1.5*lmt, open_pos_cur["open"].tolist()[0] - num*lmt)
+                    con.change_trade_stop_limit(trade_id, is_in_pips=False,is_stop=True, rate=sl,trailing_step=0)
+                    print("stop loss revised to ",sl," for ",currency)
+                    
+        if len(trade_signal)>0 and trade_signal[-1] == 'buy':
+            if len(open_pos_cur)==0:
+                con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
+                print("new long position initiated for ", currency)
+            elif len(open_pos_cur)>0:
+                if open_pos_cur["isBuy"].tolist()[0]==False:
+                    con.close_all_for_symbol(currency)
+                    print("Existing short position closed for ", currency)
+                    con.open_trade(symbol=currency,is_buy=True,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price-lmt,time_in_force='GTC')
+                    print("new long position initiated for ", currency)
+                
+        if len(trade_signal)>0 and trade_signal[-1] == 'sell':
+            if len(open_pos_cur)==0:
+                con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC')
+                print("new short position initiated for ", currency)
+            elif len(open_pos_cur)>0:
+                if open_pos_cur["isBuy"].tolist()[0]==True:
+                    con.close_all_for_symbol(currency)
+                    print("Existing long position closed for ", currency)
+                    con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC')
+                    print("new short position initiated for ", currency)
+
+
+# Continuous execution        
+starttime=time.time()
+timeout = time.time() + 60*60*24  # 60 seconds times 60 meaning the script will run for 1 hr
+while time.time() <= timeout:
+    try:
+        time.sleep(1)
+        main()
+        time.sleep(60 - ((time.time() - starttime) % 60.0)) # 1 minute interval between each new execution
+    except KeyboardInterrupt:
+        print('\n\nKeyboard exception received. Exiting.')
+        exit()
+        
+        
+"""
+def main():
+    for currency in pairs:
+        data = con.get_candles(currency, period='m1', number=250)
+        ohlc = data.iloc[:,[0,1,2,3,8]]
+        ohlc.columns = ["Open","Close","High","Low","Volume"]
+        trade_signal = trade_signal_df(ohlc)[0]
+        trade_signal[:] = (value for value in trade_signal if value != '')
+        open_pos = con.get_open_positions()
         pos_price = trade_signal_df(ohlc)[1][-1]
         
         if len(open_pos)>0 and open_pos["isBuy"].tolist()[0]==True:
@@ -152,15 +217,4 @@ def main():
             elif len(open_pos)>0 and open_pos["currency"].tolist()[0]==currency and open_pos["isBuy"].tolist()[0]==True:
                 con.close_all_for_symbol(currency)
                 con.open_trade(symbol=currency,is_buy=False,amount=pos_size,is_in_pips=False,order_type='AtMarket',stop=pos_price+lmt,time_in_force='GTC') 
-
-# Continuous execution        
-starttime=time.time()
-timeout = time.time() + 60*60*24  # 60 seconds times 60 meaning the script will run for 1 hr
-while time.time() <= timeout:
-    try:
-        time.sleep(1)
-        main()
-        time.sleep(60 - ((time.time() - starttime) % 60.0)) # 5 minute interval between each new execution
-    except KeyboardInterrupt:
-        print('\n\nKeyboard exception received. Exiting.')
-        exit()
+"""
