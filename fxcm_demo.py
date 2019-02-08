@@ -124,7 +124,8 @@ def main():
         trade_signal = trade_signal_df(ohlc)[0]
         trade_signal[:] = (value for value in trade_signal if value != '')
         open_pos = con.get_open_positions()
-        open_pos_cur = open_pos[open_pos["currency"]==currency]
+        if len(open_pos)>0:
+            open_pos_cur = open_pos[open_pos["currency"]==currency]
         pos_price = trade_signal_df(ohlc)[1][-1]
    
         if len(open_pos_cur)>0:
@@ -169,7 +170,7 @@ def main():
 
 # Continuous execution        
 starttime=time.time()
-timeout = time.time() + 60*60*24  # 60 seconds times 60 meaning the script will run for 1 hr
+timeout = time.time() + 60*60*5  # 60 seconds times 60 meaning the script will run for 1 hr
 while time.time() <= timeout:
     try:
         time.sleep(1)
@@ -179,7 +180,7 @@ while time.time() <= timeout:
         print('\n\nKeyboard exception received. Exiting.')
         exit()
         
-        
+con.close_all()        
 """
 def main():
     for currency in pairs:
